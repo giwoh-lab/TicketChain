@@ -1,0 +1,152 @@
+/*
+  Human‑crafted visual redesign – editorial, restrained, premium.
+  Updated accent color to the custom peach #ffdbac.
+*/
+
+/* Design Tokens */
+html {
+  --color-bg: #1e1e2f;            /* deep charcoal */
+  --color-bg-section: #272a34;    /* slightly lighter for sections */
+  --color-text: #e2e8f0;          /* warm light gray */
+  --color-primary: #ffdbac;       /* custom accent – peach */
+  --color-primary-dark: #e0b78a; /* darker shade for hover */
+  --color-success: #34c759;
+  --color-error: #ff3b30;
+  --radius-sm: 6px;               /* softer radii */
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --spacing-xs: 0.4rem;
+  --spacing-sm: 0.8rem;
+  --spacing-md: 1.6rem;
+  --spacing-lg: 2.4rem;
+  --font-display: 'Merriweather', serif;
+  --font-body: 'Roboto', sans-serif;
+  --font-mono: 'Source Code Pro', monospace;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+h1 { font-size: 2.5rem; font-weight: 700; }
+h2 { font-size: 2rem;   font-weight: 600; }
+h3 { font-size: 1.5rem; font-weight: 600; }
+
+code, .mono { font-family: var(--font-mono); }
+
+/* Header – navigation & wallet */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-section);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.concert-name {
+  font-size: 1.6rem;
+  color: var(--color-primary);
+}
+
+.nav { display: flex; gap: var(--spacing-sm); }
+.nav-link {
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 2px;
+  width: 0;
+  background: var(--color-primary);
+  transition: width 0.2s;
+}
+.nav-link:hover::after { width: 100%; }
+.admin-link { color: var(--color-error); font-weight: 600; }
+
+/* Buttons – primary vs secondary */
+.btn {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+.btn:hover { background: var(--color-primary-dark); }
+.btn.small { padding: var(--spacing-xs) var(--spacing-xs); font-size: 0.9rem; }
+
+/* Sections – intentional whitespace */
+.section {
+  padding: var(--spacing-lg) var(--spacing-lg);
+  background: var(--color-bg-section);
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-md);
+}
+
+/* Hero – asymmetric layout */
+.hero { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-lg); padding: var(--spacing-lg); background: var(--color-bg-section); border-radius: var(--radius-md); }
+.hero-content { flex: 1 1 280px; }
+.hero-image img { max-width: 100%; height: auto; border-radius: var(--radius-md); }
+.hero-title { margin-bottom: var(--spacing-sm); }
+.hero-meta, .hero-price { margin-bottom: var(--spacing-xs); }
+.hero-status-row { display: flex; align-items: center; gap: var(--spacing-xs); margin-bottom: var(--spacing-xs); }
+
+/* Ticket Card – physical feel */
+.ticket-card {
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  background: #fff;
+  color: #000;
+  max-width: 500px;
+  position: relative;
+  overflow: hidden;
+}
+.ticket-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1.5rem;
+  background: repeating-linear-gradient(45deg, var(--color-primary) 0, var(--color-primary) 2px, transparent 2px, transparent 4px);
+}
+.ticket-header { border-bottom: 1px solid #ddd; padding-bottom: var(--spacing-sm); margin-bottom: var(--spacing-sm); }
+.ticket-id { font-family: var(--font-mono); font-size: 0.9rem; color: #555; }
+.ticket-actions { margin-top: var(--spacing-sm); display: flex; gap: var(--spacing-xs); }
+
+/* Admin section – distinct but cohesive */
+.admin-section { background: var(--color-bg-section); border-left: 4px solid var(--color-error); padding-left: var(--spacing-lg); border-radius: var(--radius-md); }
+.admin-box { margin-bottom: var(--spacing-md); }
+.admin-box label { display: block; margin: var(--spacing-xs) 0; }
+
+.msg { margin-top: var(--spacing-xs); font-weight: 600; }
+.hidden { display: none; }
+.code-block { background: #fff; color: #000; padding: var(--spacing-sm); border-radius: var(--radius-sm); overflow-x: auto; font-family: var(--font-mono); }
+
+/* Subtle micro‑interactions */
+.btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .hero { flex-direction: column; }
+  .section { padding: var(--spacing-md); }
+}
