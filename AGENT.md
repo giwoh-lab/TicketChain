@@ -8,8 +8,6 @@ This document provides context, architectural guidance, and coding standards for
 ## High‑Level Architecture
 ```
 concert-tickets-management/
-├─ contracts/                # Solidity contracts (Remix IDE)
-│   └─ Ticket.sol            # Core ticket contract (to be created in Remix)
 ├─ scripts/                  # Optional helper scripts (e.g., deployment via Remix scripts)
 ├─ src/                      # Frontend (plain HTML/JS, no framework required)
 │   ├─ pages/                # Static HTML pages (frontend.html, etc.)
