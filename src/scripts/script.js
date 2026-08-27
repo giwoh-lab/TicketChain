@@ -7,13 +7,13 @@
     • Updates the existing UI (IDs already present in index.html)
     • Handles UX states, errors and chain changes
   ====================================================================*/
-// import { ethers } from "ethers"; // ethers is loaded via CDN, import not needed
+import { ethers } from "ethers";
 
 /* -----------------------------------------------------------------
     1️⃣  Configuration
   ----------------------------------------------------------------- */
 const CONTRACT_ADDRESS = "0x5b18578ee94786839cd4231a2ebf813d08adf805";
-const EXPECTED_CHAIN_ID = "0xaa36a7"; // Sepolia – change if using another network
+const SEPOLIA_CHAIN_ID = 11155111n; // Sepolia – ethers v6 returns chainId as BigInt
 
 let provider;          // ethers BrowserProvider (MetaMask)
 let signer;            // ethers Signer
@@ -25,16 +25,15 @@ let currentAccount = null; // Normalised address string
   ----------------------------------------------------------------- */
 async function initProvider() {
   if (!window.ethereum) {
-    alert("MetaMask (or another injected wallet) not detected.");
+    alert("MetaMask is not installed.");
     return false;
   }
   // BrowserProvider is the v6 way to wrap an injected provider.
   provider = new ethers.BrowserProvider(window.ethereum);
-  // Verify we are on the expected network.
+  // Verify we are on the expected network (ethers v6 returns BigInt).
   const network = await provider.getNetwork();
-  const chainIdHex = "0x" + network.chainId.toString(16);
-  if (chainIdHex !== EXPECTED_CHAIN_ID) {
-    alert(`Please switch MetaMask to the expected network (chain ${EXPECTED_CHAIN_ID}).`);
+  if (network.chainId !== SEPOLIA_CHAIN_ID) {
+    alert("Please switch MetaMask to Sepolia.");
     return false;
   }
   return true;
@@ -44,7 +43,7 @@ async function initProvider() {
     3️⃣  Contract initialization (load ABI from ./abi.json)
   ----------------------------------------------------------------- */
 async function initContract() {
-  const resp = await fetch("./abi.json");
+  const resp = await fetch("/abi.json");
   const abi = await resp.json();
   // Use the signer as the contract's signer so write calls are signed.
   contract = new ethers.Contract(CONTRACT_ADDRESS, abi, signer);
@@ -53,31 +52,75 @@ async function initContract() {
 /* -----------------------------------------------------------------
     4️⃣  Wallet connection & UI update
   ----------------------------------------------------------------- */
-async function connectWallet() {
-  if (!await initProvider()) return;
+async function connectWallet(requestAccess = true) {
   try {
-    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-    if (!accounts || accounts.length === 0) {
-      alert("No accounts returned from MetaMask.");
+    if (!window.ethereum) {
+      alert("MetaMask is not installed.");
       return;
     }
+
+    // Create provider
+    provider = new ethers.BrowserProvider(window.ethereum);
+
+    // Check network (ethers v6: chainId is BigInt)
+    const network = await provider.getNetwork();
+    if (network.chainId !== SEPOLIA_CHAIN_ID) {
+      // Ask MetaMask to switch to Sepolia automatically
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0xaa36a7" }], // Sepolia hex
+        });
+        // Re-create provider after the network switch
+        provider = new ethers.BrowserProvider(window.ethereum);
+      } catch (switchErr) {
+        // User rejected the switch or Sepolia isn't added
+        alert("Please switch MetaMask to Sepolia to use this DApp.");
+        return;
+      }
+    }
+
+    // Request wallet connection or silently read existing accounts
+    let accounts;
+    if (requestAccess) {
+      accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    } else {
+      accounts = await window.ethereum.request({ method: "eth_accounts" });
+    }
+    if (!accounts || accounts.length === 0) return;
+
+    // Get signer and normalised address
     signer = await provider.getSigner();
     currentAccount = await signer.getAddress();
-    // Normalise address for comparisons.
     currentAccount = ethers.getAddress(currentAccount);
+
+    console.log("Connected wallet:", currentAccount);
+
+    // Initialize contract
     await initContract();
-    // UI updates
+
+    // Update UI
     updateWalletDisplay();
+
+    // Load blockchain data
     await refreshAllReadData();
-    // Register contract event listeners (once per page load).
+
+    // Setup listeners (idempotent – guarded by flags)
     setupContractEventListeners();
   } catch (err) {
     console.error("Wallet connection failed:", err);
-    alert(err?.error?.message || err?.message || "Wallet connection failed");
+    if (err.code === 4001) {
+      alert("You rejected the wallet connection.");
+    } else if (err.code === -32002) {
+      alert("A MetaMask connection request is already pending. Open MetaMask and finish it first.");
+    } else {
+      alert(err?.shortMessage || err?.message || "Wallet connection failed.");
+    }
   }
 }
 
 function updateWalletDisplay() {
+  
   // Update wallet UI
   const walletEl = document.getElementById("walletDisplay");
   const btnEl = document.getElementById("connectBtn");
@@ -88,20 +131,9 @@ function updateWalletDisplay() {
 /* -----------------------------------------------------------------
     5️⃣  MetaMask event handling (single registration)
   ----------------------------------------------------------------- */
-function handleAccountsChanged(accounts) {
-  if (accounts.length === 0) {
-    // Disconnected
-    currentAccount = null;
-    document.getElementById("walletDisplay").textContent = "";
-    document.getElementById("connectBtn").textContent = "Connect Wallet";
-    // Clear UI that depends on an account.
-    clearAccountUI();
-    return;
-  }
-  currentAccount = ethers.getAddress(accounts[0]);
-  document.getElementById("walletDisplay").textContent = `Connected: ${shortAddress(currentAccount)}`;
-  // Refresh all blockchain‑derived data for the new account.
-  refreshAllReadData();
+function handleAccountsChanged(_accounts) {
+  // Reload the page to reset provider/signer/contract with the new account.
+  window.location.reload();
 }
 
 function handleChainChanged(_chainId) {
@@ -160,11 +192,11 @@ function statusToString(s) {
   ----------------------------------------------------------------- */
 async function readOwner() { return await contract.owner(); }
 async function readCheckInOperator() { return await contract.checkInOperator(); }
-async function readOpeningTime() { return (await contract.openingTime()).toNumber(); }
-async function readClosingTime() { return (await contract.closingTime()).toNumber(); }
+async function readOpeningTime() { return Number(await contract.openingTime()); }
+async function readClosingTime() { return Number(await contract.closingTime()); }
 async function readTicketPrice() { return await contract.ticketPrice(); }
-async function readNextTicketId() { return (await contract.nextTicketId()).toNumber(); }
-async function readMaxTickets() { return (await contract.maxTickets()).toNumber(); }
+async function readNextTicketId() { return Number(await contract.nextTicketId()); }
+async function readMaxTickets() { return Number(await contract.maxTickets()); }
 async function readIsSaleOpen() { return await contract.isSaleOpen(); }
 async function readHasTicket(addr) { return await contract.hasTicket(addr); }
 async function readGetRTB(addr) { return await contract.getRTB(addr); }
@@ -303,9 +335,12 @@ function handleTxError(err) {
 /* -----------------------------------------------------------------
     🔁 Event‑based UI refresh (contract events)
   ----------------------------------------------------------------- */
+let contractListenersInitialized = false;
+
 function setupContractEventListeners() {
-  if (!contract) return;
-  // Helper to avoid duplicate listeners – remove first.
+  if (!contract || contractListenersInitialized) return;
+  contractListenersInitialized = true;
+
   const events = [
     "TicketCreated",
     "TicketTransferred",
@@ -319,11 +354,9 @@ function setupContractEventListeners() {
     "OwnerTransferred",
     "CheckInOperatorChanged",
   ];
-  events.forEach((ev) => {
-    contract.removeAllListeners && contract.removeAllListeners(ev);
-    contract.on(ev, async (...args) => {
-      // Simple strategy: refresh everything after any relevant event.
-      console.log(`Event ${ev} fired`, args);
+  events.forEach((eventName) => {
+    contract.on(eventName, async () => {
+      console.log(`Event ${eventName} fired`);
       await refreshAllReadData();
     });
   });
@@ -359,8 +392,25 @@ async function handleBuy() {
       tx = await contract.buyTicketRTB(commitment, { value: price });
     }
     const receipt = await tx.wait();
-    const ev = receipt.events.find((e) => e.event === "TicketCreated");
-    const ticketId = ev?.args?.ticketId?.toNumber?.() ?? "unknown";
+
+    // ethers v6: parse logs manually instead of receipt.events
+    let ticketId;
+    for (const log of receipt.logs) {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        if (parsed && parsed.name === "TicketCreated") {
+          ticketId = Number(parsed.args.ticketId);
+          break;
+        }
+      } catch {
+        // Ignore logs that don't belong to our contract/interface
+      }
+    }
+
+    if (ticketId === undefined) {
+      throw new Error("TicketCreated event not found");
+    }
+
     // Generate QR hash (same encoding as Solidity)
     const qrHash = ethers.keccak256(ethers.solidityPacked(["uint256", "string"], [ticketId, secretKey]));
     setStatus("confirmed", `Ticket #${ticketId} purchased! QR hash: ${qrHash}`);
@@ -483,16 +533,17 @@ async function sendAdminTx(fn, args, successMsg) {
   }
 }
 
-/* -----------------------------------------------------------------
-    📦 Event listeners & initialization (page load)
-  ----------------------------------------------------------------- */
-window.addEventListener("load", async () => {
+/**
+ * Initialize the DApp – attach DOM event listeners and auto-connect.
+ * Exported so that index.jsx can call it from useEffect after the DOM is ready.
+ */
+export async function initApp() {
   // Register MetaMask listeners once.
   setupWalletListeners();
 
   // Connect button
   const connectBtn = document.getElementById("connectBtn");
-  if (connectBtn) connectBtn.addEventListener("click", connectWallet);
+  if (connectBtn) connectBtn.addEventListener("click", () => connectWallet(true));
 
   // Purchase buttons (both main and detail)
   const buyBtn = document.getElementById("buyBtn");
@@ -528,8 +579,11 @@ window.addEventListener("load", async () => {
   const withdrawBtn = document.getElementById("withdrawBtn");
   if (withdrawBtn) withdrawBtn.addEventListener("click", adminWithdraw);
 
-  // Auto‑connect if MetaMask already injected and accounts available.
-  if (window.ethereum && (await window.ethereum.request({ method: "eth_accounts" })).length) {
-    await connectWallet();
+  // Auto‑connect without popup if MetaMask already has accounts.
+  if (window.ethereum) {
+    const accounts = await window.ethereum.request({ method: "eth_accounts" });
+    if (accounts.length > 0) {
+      await connectWallet(false);
+    }
   }
-});
+}

@@ -6,4 +6,3 @@ import '../styles/style.css'; // Global stylesheet for the prototype UI
 export default function MyApp({ Component, pageProps }) {
   return <Component {...pageProps} />;
 }
-

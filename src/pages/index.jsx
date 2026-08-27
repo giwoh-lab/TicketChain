@@ -1,240 +1,302 @@
-import { useEffect } from 'react';
-import Head from 'next/head';
+import { useState, useEffect, useCallback } from "react";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { useAuth } from "../hooks/use-auth";
+import { useWallet } from "../hooks/use-wallet";
+import {
+  ethers,
+  getContract,
+  shortAddress,
+  readIsSaleOpen,
+  readOpeningTime,
+  readClosingTime,
+  readTicketPrice,
+  readMaxTickets,
+  readNextTicketId,
+  readHasTicket,
+  readGetRTB,
+  readMyTicket,
+  readOwnerTicket,
+} from "../lib/contract";
 
-/**
- * This page mirrors the original static `index.html` while running inside
- * the Next.js Pages Router. All HTML structure, IDs, and CSS classes are
- * preserved so the existing `src/scripts/index.js` can manipulate the DOM
- * unchanged.
- */
-export default function Home() {
-  // Load the original script after the component mounts – this registers the
-  // DOM event listeners and UI logic that the prototype relies on.
+function statusToString(s) {
+  if (s === 0) return "VALID";
+  if (s === 1) return "INVALID";
+  if (s === 2) return "USED";
+  return "UNKNOWN";
+}
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const { user, loading: authLoading, logout } = useAuth();
+  const { account, connect, connecting, error: walletError } = useWallet();
+
+  const [saleData, setSaleData] = useState(null);
+  const [userTicket, setUserTicket] = useState(null);
+  const [hasTicket, setHasTicket] = useState(false);
+  const [rtb, setRtb] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState("--:--:--");
+  const [buyError, setBuyError] = useState("");
+
+  // Auth guard
   useEffect(() => {
-    // Dynamically import the original script (it runs in the global scope).
-    // The script registers a `DOMContentLoaded` listener, but by the time
-    // this effect runs the event has already fired.  To ensure the init
-    // code runs we manually dispatch the event after the import.
-    import('../scripts/script.js').then(() => {
-      // If the script has already attached the listener it will run now.
-      // If the listener missed the original DOMContentLoaded, we trigger it.
-      const evt = new Event('DOMContentLoaded');
-      document.dispatchEvent(evt);
-    });
-  }, []);
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [authLoading, user, router]);
+
+  // Load contract data when wallet is connected
+  const loadData = useCallback(async () => {
+    if (!account || !getContract()) return;
+    setLoading(true);
+    try {
+      const [isSaleOpen, openingTime, closingTime, price, maxTickets, nextId, owns, rtbStatus] =
+        await Promise.all([
+          readIsSaleOpen(),
+          readOpeningTime(),
+          readClosingTime(),
+          readTicketPrice(),
+          readMaxTickets(),
+          readNextTicketId(),
+          readHasTicket(account),
+          readGetRTB(account),
+        ]);
+
+      setSaleData({
+        isSaleOpen,
+        openingTime,
+        closingTime,
+        priceEth: ethers.formatEther(price),
+        priceWei: price,
+        maxTickets,
+        ticketsSold: nextId > 0 ? nextId - 1 : 0,
+      });
+      setHasTicket(owns);
+      setRtb(rtbStatus);
+
+      // Load user's ticket if they own one
+      if (owns) {
+        try {
+          const ticket = await readMyTicket();
+          const ticketId = await readOwnerTicket(account);
+          setUserTicket({ ...ticket, id: ticketId });
+        } catch (err) {
+          console.error("Failed to read user ticket:", err);
+        }
+      } else {
+        setUserTicket(null);
+      }
+    } catch (err) {
+      console.error("Failed to load contract data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [account]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!saleData || saleData.isSaleOpen) {
+      setCountdown(saleData?.isSaleOpen ? "SALE OPEN" : "--:--:--");
+      return;
+    }
+    function tick() {
+      const now = Math.floor(Date.now() / 1000);
+      const diff = saleData.openingTime - now;
+      if (diff <= 0) {
+        setCountdown("00:00:00");
+        return;
+      }
+      const h = Math.floor(diff / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      const s = diff % 60;
+      setCountdown(
+        `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+      );
+    }
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [saleData]);
+
+  // Access decision
+  function getAccessDecision() {
+    if (!account) return { canBuy: false, reason: "Wallet not connected." };
+    if (!saleData) return { canBuy: false, reason: "Loading contract data…" };
+    if (hasTicket) return { canBuy: false, reason: "Your wallet already owns a ticket." };
+    if (saleData.isSaleOpen) return { canBuy: true, reason: "Official sale is open. You can buy a ticket." };
+    if (rtb) return { canBuy: true, reason: "You have RTB permission. You can buy a ticket." };
+    return { canBuy: false, reason: "Sale is closed and RTB is unavailable." };
+  }
+
+  function handleBuy() {
+    setBuyError("");
+    const decision = getAccessDecision();
+    if (!decision.canBuy) {
+      setBuyError(decision.reason);
+      return;
+    }
+    // Prompt for secret key
+    const secretKey = prompt("Enter a secret key (keep it safe – you will need it later for verification):");
+    if (!secretKey) {
+      setBuyError("Secret key is required to create your ticket.");
+      return;
+    }
+    // Store purchase params and redirect to payment
+    sessionStorage.setItem("ctm_purchase", JSON.stringify({ secretKey }));
+    router.push("/payment");
+  }
+
+  if (authLoading) return null;
+  if (!user) return null;
+
+  const decision = getAccessDecision();
 
   return (
     <>
       <Head>
-        <title>Concert Ticket DApp Prototype</title>
-        <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        {/* Font link retained from original HTML */}
-        {/* Font link moved to _document.jsx */}
+        <title>Dashboard – Concert Ticket DApp</title>
       </Head>
-      {/* Header – navigation & wallet connection */}
+
+      {/* Header */}
       <header className="header">
         <div className="header-left">
           <h1 className="concert-name">Example Concert 2026</h1>
         </div>
         <nav className="nav">
-          <a href="#hero" className="nav-link">
-            Home
-          </a>
-          <a href="#events" className="nav-link">
-            Events
-          </a>
-          <a href="#my" className="nav-link">
-            My Ticket
-          </a>
-          <a href="#admin" className="nav-link admin-link">
-            Admin
-          </a>
+          <a href="#sale" className="nav-link">Sale</a>
+          <a href="#ticket" className="nav-link">My Ticket</a>
+          <a href="/admin" className="nav-link admin-link">Admin</a>
         </nav>
         <div className="header-right">
-          <button id="connectBtn" className="btn connect">
-            Connect Wallet
+          {account ? (
+            <span className="wallet-display">Connected: {shortAddress(account)}</span>
+          ) : (
+            <button className="btn connect" onClick={connect} disabled={connecting}>
+              {connecting ? "Connecting…" : "Connect Wallet"}
+            </button>
+          )}
+          <button
+            className="btn btn-secondary"
+            onClick={() => { logout(); router.push("/login"); }}
+            style={{ marginLeft: "0.5rem" }}
+          >
+            Logout
           </button>
-          <span id="walletDisplay" className="wallet-display" />
         </div>
       </header>
 
-      <main>
-        {/* Event Discovery – list of upcoming events */}
-        <section className="section" id="events">
-          <h2>Upcoming Events</h2>
-          <div className="events-grid" id="eventsGrid" />
+      <main style={{ padding: "var(--spacing-lg)" }}>
+        {/* User info */}
+        <section className="section">
+          <h2>Welcome, {user.username}!</h2>
+          <p style={{ opacity: 0.7 }}>{user.email}</p>
+          {walletError && <p className="auth-error">{walletError}</p>}
         </section>
 
-        {/* Event Detail – populated when a card is clicked */}
-        <section className="section hidden" id="eventDetail">
-          <h2 id="detailTitle" />
-          <div className="detail-image">
-            <img id="detailImg" src="/assets/images/images.jpeg" alt="Event image" />
-          </div>
-          <p id="detailDate" />
-          <p id="detailLocation" />
-          <p id="detailDesc" />
-          <div className="sale-info">
-            <div className="hero-status-row">
-              <span className="status-label">Official Sale:</span>
-              <span id="detailOfficialState" className="status-value" />
-              <span className="countdown" id="detailCountdown" />
-            </div>
-            <div className="hero-status-row">
-              <span className="status-label">RTB:</span>
-              <span id="detailRtbState" className="status-value" />
-            </div>
-          </div>
-          <button id="detailBuyBtn" className="btn primary-cta">
-            Buy Ticket
-          </button>
-          <div id="detailBuyMessage" className="msg" />
-        </section>
-
-        {/* Hero – main info block */}
-        <section className="hero" id="hero">
-          <div className="hero-content">
-            <h2 className="hero-title">Example Concert 2026</h2>
-            <p className="hero-meta">June 12, 2026 • Grand Hall • New York City</p>
-            <p className="hero-price">
-              Ticket price: <strong>0.05 ETH</strong>
-            </p>
-            <div className="hero-status-row">
-              <span className="status-label">Official Sale:</span>
-              <span id="officialState" className="status-value">
-                NOT_STARTED
-              </span>
-              <span className="countdown" id="countdown">
-                --:--:--
-              </span>
-            </div>
-            <div className="hero-status-row">
-              <span className="status-label">RTB:</span>
-              <span id="rtbState" className="status-value">
-                UNAVAILABLE
-              </span>
-            </div>
-            <button id="buyBtn" className="btn primary-cta">
-              Buy Ticket
+        {/* Wallet prompt */}
+        {!account && (
+          <section className="section">
+            <h2>Connect Your Wallet</h2>
+            <p>Connect MetaMask to interact with the smart contract on Sepolia.</p>
+            <button className="btn connect" onClick={connect} disabled={connecting}>
+              {connecting ? "Connecting…" : "Connect Wallet"}
             </button>
-            <div id="buyMessage" className="msg" />
-          </div>
-          <div className="hero-image">
-            <img src="/assets/images/images.jpeg" alt="Concert venue illustration" />
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* Access Decision – concise info block */}
-        <section className="section" id="accessDecision">
-          <h2>Can I Buy?</h2>
-          <pre className="code-block" id="accessInfo">
-            Wallet: <span id="walletAddrDisplay">-</span>
-            Already owns ticket: <span id="ownsTicket">NO</span>
-            Official sale: <span id="officialSaleStatus">NOT_OPEN</span>
-            RTB: <span id="rtbStatus">UNAVAILABLE</span>
-            ----------------------------------------
-            <span id="accessResult" />
-          </pre>
-        </section>
+        {/* Sale Status */}
+        {account && saleData && (
+          <section className="section" id="sale">
+            <h2>Sale Status</h2>
+            <div className="hero">
+              <div className="hero-content">
+                <h3 className="hero-title">Example Concert 2026</h3>
+                <p className="hero-meta">June 12, 2026 • Grand Hall • New York City</p>
+                <p className="hero-price">
+                  Ticket price: <strong>{saleData.priceEth} ETH</strong>
+                </p>
+                <div className="hero-status-row">
+                  <span className="status-label">Official Sale:</span>
+                  <span className={`status-value ${saleData.isSaleOpen ? "open" : "closed"}`}>
+                    {saleData.isSaleOpen ? "OPEN" : "CLOSED"}
+                  </span>
+                  <span className="countdown">{countdown}</span>
+                </div>
+                <div className="hero-status-row">
+                  <span className="status-label">RTB:</span>
+                  <span className="status-value">{rtb ? "AVAILABLE" : "UNAVAILABLE"}</span>
+                </div>
+                <div className="hero-status-row">
+                  <span className="status-label">Tickets Sold:</span>
+                  <span className="status-value">
+                    {saleData.ticketsSold} / {saleData.maxTickets}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
-        {/* My Ticket – visual ticket card */}
-        <section className="section" id="myTicket">
+        {/* Access Decision & Buy */}
+        {account && saleData && (
+          <section className="section">
+            <h2>Can I Buy?</h2>
+            <pre className="code-block">
+{`Wallet:              ${shortAddress(account)}
+Already owns ticket: ${hasTicket ? "YES" : "NO"}
+Official sale:       ${saleData.isSaleOpen ? "OPEN" : "CLOSED"}
+RTB:                 ${rtb ? "AVAILABLE" : "UNAVAILABLE"}
+----------------------------------------
+${decision.reason}`}
+            </pre>
+            {!hasTicket && (
+              <div style={{ marginTop: "1rem" }}>
+                <button
+                  className="btn primary-cta"
+                  onClick={handleBuy}
+                  disabled={!decision.canBuy}
+                >
+                  Buy Ticket
+                </button>
+                {buyError && <p className="auth-error" style={{ marginTop: "0.5rem" }}>{buyError}</p>}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* My Ticket */}
+        <section className="section" id="ticket">
           <h2>My Ticket</h2>
-          <div id="ticketInfo" className="ticket-card hidden">
-            <div className="ticket-header">
-              <h3 className="ticket-event">Example Concert 2026</h3>
-              <p className="ticket-id">
-                Ticket #<span id="ticketId" />
-              </p>
+          {!account && <p>Connect your wallet to view your ticket.</p>}
+          {account && loading && <p>Loading…</p>}
+          {account && !loading && !hasTicket && <p>You do not own a ticket yet.</p>}
+          {account && !loading && hasTicket && userTicket && (
+            <div className="ticket-card">
+              <div className="ticket-header">
+                <h3 className="ticket-event">Example Concert 2026</h3>
+                <p className="ticket-id">Ticket #{userTicket.id}</p>
+              </div>
+              <div className="ticket-body">
+                <p>
+                  <strong>Owner:</strong> {shortAddress(userTicket.owner)}
+                </p>
+                <p>
+                  <strong>Status:</strong> {statusToString(userTicket.status)}
+                </p>
+                <p>
+                  <strong>Commitment:</strong>{" "}
+                  <span className="mono" style={{ fontSize: "0.8rem" }}>
+                    {userTicket.commitment}
+                  </span>
+                </p>
+              </div>
             </div>
-            <div className="ticket-body">
-              <p>
-                <strong>Owner:</strong> <span id="ticketOwner" />
-              </p>
-              <p>
-                <strong>Status:</strong> <span id="ticketStatus" />
-              </p>
-              <p>
-                <strong>Nonce:</strong> <span id="ticketNonce" />
-              </p>
-              <p>
-                <strong>Purchase time:</strong>{' '}
-                <span id="ticketTime" />
-              </p>
-            </div>
-            <div className="ticket-actions">
-              <button id="checkInBtn" className="btn small">
-                Simulate Check‑in
-              </button>
-              <button id="invalidateBtn" className="btn small">
-                Simulate Invalidation
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Ticket Verification */}
-        <section className="section" id="verifyTicket">
-          <h2>Ticket Verification</h2>
-          <div className="verify-group">
-            <input type="number" id="verifyInput" placeholder="Enter Ticket ID" />
-            <button id="verifyBtn" className="btn small">
-              VERIFY TICKET
-            </button>
-          </div>
-          <div id="verifyResult" className="msg" />
-        </section>
-
-        {/* Admin Dashboard */}
-        <section className="section admin-section hidden" id="adminDashboard">
-          <h2>Admin Dashboard</h2>
-          <div className="admin-box">
-            <h3>Sale Configuration</h3>
-            <label>
-              Open time:{' '}
-              <input type="datetime-local" id="openInput" />
-            </label>
-            <label>
-              Close time:{' '}
-              <input type="datetime-local" id="closeInput" />
-            </label>
-            <label>
-              RTB:{' '}
-              <select id="rtbSelect">
-                <option value="AVAILABLE">AVAILABLE</option>
-                <option value="UNAVAILABLE">UNAVAILABLE</option>
-              </select>
-            </label>
-            <button id="updateSaleBtn" className="btn small">
-              Update Sale Time
-            </button>
-          </div>
-          <div className="admin-box">
-            <h3>Ticket Management</h3>
-            <label>
-              Ticket ID:{' '}
-              <input type="number" id="adminTicketId" />
-            </label>
-            <button id="invalidateAdminBtn" className="btn small">
-              Invalidate Ticket
-            </button>
-            <button id="restoreAdminBtn" className="btn small">
-              Restore Ticket
-            </button>
-          </div>
-        </section>
-
-        {/* Smart Contract State */}
-        <section className="section" id="contractState">
-          <h2>Smart Contract State</h2>
-          <pre className="code-block" id="stateDisplay" />
-        </section>
-
-        {/* Transaction Log */}
-        <section className="section" id="txLog">
-          <h2>Transaction Log</h2>
-          <pre className="code-block" id="logDisplay" />
+          )}
         </section>
       </main>
     </>
