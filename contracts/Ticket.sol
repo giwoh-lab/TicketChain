@@ -226,7 +226,6 @@
           external
           payable
           saleOpen
-          noTicket
       {
           _purchaseTicket(commitment);
       }
@@ -240,7 +239,6 @@
           external
           payable
           rtbAvailable
-          noTicket
       {
           // RTB purchases are only allowed BEFORE the official sale starts.
           require(block.timestamp < openingTime, "RTB only before opening time");
@@ -264,6 +262,7 @@
       ///      re‑using the secret after the transfer.
       function transferTicket(address to, uint256 ticketId, bytes32 newCommitment)
           external
+          ticketExists(ticketId)
           onlyTicketOwner(ticketId)
           onlyValidTicket(ticketId)
       {

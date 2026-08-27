@@ -3,8 +3,8 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useAuth } from "../hooks/use-auth";
 import { useWallet } from "../hooks/use-wallet";
+import { ethers } from "ethers";
 import {
-  ethers,
   getContract,
   shortAddress,
   readIsSaleOpen,
@@ -17,7 +17,10 @@ import {
   readGetRTB,
   readMyTicket,
   readOwnerTicket,
+  transferTicket,
+  // setTicketCommitment,
 } from "../lib/contract";
+import { QRCodeCanvas } from "qrcode.react";
 
 function statusToString(s) {
   if (s === 0) return "VALID";
@@ -27,6 +30,8 @@ function statusToString(s) {
 }
 
 export default function DashboardPage() {
+
+
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
   const { account, connect, connecting, error: walletError } = useWallet();
@@ -38,6 +43,242 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState("--:--:--");
   const [buyError, setBuyError] = useState("");
+
+  const [transferModal, setTransferModal] = useState(null);
+  // transferModal = { secret, qrHash, txHash, recipientAddr } | null
+
+  // Transfer handler
+  // const handleTransfer = async () => {
+  //   if (!account) {
+  //     setTransferMessage('Wallet not connected');
+  //     return;
+  //   }
+  //   if (!transferRecipient) {
+  //     setTransferMessage('Recipient address required');
+  //     return;
+  //   }
+  //   let recipientAddr;
+  //   try {
+  //     recipientAddr = ethers.getAddress(transferRecipient.trim());
+  //   } catch {
+  //     setTransferMessage('Invalid recipient address');
+  //     return;
+  //   }
+  //   if (recipientAddr === ethers.ZeroAddress) {
+  //     setTransferMessage('Recipient address cannot be zero');
+  //     return;
+  //   }
+  //   // Check recipient does not already own a ticket
+  //   try {
+  //     const already = await readHasTicket(recipientAddr);
+  //     if (already) {
+  //       setTransferMessage('Recipient already owns a ticket');
+  //       return;
+  //     }
+  //   } catch (e) {
+  //     console.error(e);
+  //     setTransferMessage('Failed to verify recipient');
+  //     return;
+  //   }
+  //   // No secret needed from sender. Transfer simply moves ownership.
+  //   setTransferLoading(true);
+  //   setTransferMessage('');
+  //   try {
+  //     const txHash = await transferTicket(recipientAddr, userTicket.id);
+  //     // Wait for transaction confirmation inside helper (it already waits)
+  //     setTransferMessage(`Ticket #${userTicket.id} transferred. Tx: ${txHash.slice(0, 10)}...`);
+  //     // Refresh data
+  //     await loadData();
+  //   } catch (err) {
+  //     console.error(err);
+  //     const reason = err?.reason || err?.error?.message || err?.message || 'Transfer failed';
+  //     setTransferMessage(reason);
+  //   } finally {
+  //     setTransferLoading(false);
+  //     // clear inputs on success
+  //     if (transferMessage && !transferLoading) {
+  //       setTransferRecipient('');
+  //       setTransferSecret('');
+  //     }
+  //   }
+  // };
+  const handleTransfer = async () => {
+    if (!account) {
+      setTransferMessage("Wallet not connected");
+      return;
+    }
+    if (!transferRecipient) {
+      setTransferMessage("Recipient address required");
+      return;
+    }
+
+    let recipientAddr;
+    try {
+      recipientAddr = ethers.getAddress(transferRecipient.trim());
+    } catch {
+      setTransferMessage("Invalid recipient address");
+      return;
+    }
+
+    if (recipientAddr === ethers.ZeroAddress) {
+      setTransferMessage("Recipient address cannot be zero");
+      return;
+    }
+
+    try {
+      const already = await readHasTicket(recipientAddr);
+      if (already) {
+        setTransferMessage("Recipient already owns a ticket");
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+      setTransferMessage("Failed to verify recipient");
+      return;
+    }
+
+    setTransferLoading(true);
+    setTransferMessage("");
+
+    try {
+      // 1. Generate secret key cho recipient
+      const newSecret = generateSecret();
+
+      // 2. Tính commitment — phải dùng toUtf8Bytes để khớp với contract
+      const newCommitment = ethers.keccak256(ethers.toUtf8Bytes(newSecret));
+
+      // 3. Tính QR hash cho recipient (họ sẽ cần cái này)
+      const newQrHash = ethers.keccak256(
+        ethers.solidityPacked(
+          ["uint256", "string"],
+          [userTicket.id, newSecret]
+        )
+      );
+
+      // 4. Gọi contract với commitment mới
+      const txHash = await transferTicket(recipientAddr, userTicket.id, newCommitment);
+
+      // 5. Xóa secret cũ của sender khỏi localStorage
+      localStorage.removeItem(`${account.toLowerCase()}_${userTicket.id}`);
+
+      // 6. Hiển thị secret cho sender để họ gửi cho recipient
+      setTransferModal({
+        secret: newSecret,
+        qrHash: newQrHash,
+        txHash,
+        recipientAddr,
+      });
+
+      // 7. Refresh data
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      const reason = err?.reason || err?.error?.message || err?.message || "Transfer failed";
+      setTransferMessage(reason);
+    } finally {
+      setTransferLoading(false);
+    }
+  };
+
+  // Transfer UI state
+  const [transferRecipient, setTransferRecipient] = useState("");
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferMessage, setTransferMessage] = useState("");
+
+  // ---------- Secret key management ----------
+  const generateSecret = () => {
+    // 32‑byte random secret, hex encoded (64 chars)
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  };
+
+  // const handleGenerateSecret = async () => {
+  //   if (!account || !userTicket) return;
+  //   console.log("DEBUG:", { ticketId: userTicket.id, owner: userTicket.owner, account });
+
+  //   const newSecret = generateSecret();
+
+  //   // ✅ Phải dùng toUtf8Bytes để khớp với verifyTicket trong contract
+  //   const commitment = ethers.keccak256(ethers.toUtf8Bytes(newSecret));
+
+  //   try {
+  //     await setTicketCommitment(userTicket.id, commitment);
+  //     const hash = ethers.keccak256(
+  //       ethers.solidityPacked(["uint256", "string"], [userTicket.id, newSecret])
+  //     );
+  //     setSecretKey(newSecret);
+  //     setQrHash(hash);
+  //     localStorage.setItem(
+  //       `${account.toLowerCase()}_${userTicket.id}`,
+  //       JSON.stringify({ secretKey: newSecret, qrHash: hash })
+  //     );
+  //     setSecretMessage("Secret generated and commitment stored on-chain.");
+  //   } catch (err) {
+  //     console.error(err);
+  //     setSecretMessage(err?.reason || err?.message || "Failed to set commitment");
+  //   }
+  // };
+
+  // const handleChangeSecret = async () => {
+  //   // essentially same as generate but overwrites
+  //   if (!account || !userTicket) return;
+  //   const newSecret = generateSecret();
+  //   const commitment = ethers.keccak256(ethers.toUtf8Bytes(newSecret));
+  //   try {
+  //     await setTicketCommitment(userTicket.id, commitment);
+  //     const hash = ethers.keccak256(
+  //       ethers.solidityPacked(["uint256", "bytes32"], [userTicket.id, "0x" + newSecret])
+  //     );
+  //     setSecretKey(newSecret);
+  //     setQrHash(hash);
+  //     localStorage.setItem(
+  //       `${account.toLowerCase()}_${userTicket.id}`,
+  //       JSON.stringify({ secretKey: newSecret, qrHash: hash })
+  //     );
+  //     setSecretMessage("Secret rotated successfully.");
+  //   } catch (err) {
+  //     console.error(err);
+  //     setSecretMessage(err?.reason || err?.message || "Failed to rotate secret");
+  //   }
+  // };
+
+  const handleGenerateSecret = async () => {
+    if (!account || !userTicket) return;
+    const newSecret = generateSecret();
+    const hash = ethers.keccak256(
+      ethers.solidityPacked(["uint256", "string"], [userTicket.id, newSecret])
+    );
+    setSecretKey(newSecret);
+    setQrHash(hash);
+    localStorage.setItem(
+      `${account.toLowerCase()}_${userTicket.id}`,
+      JSON.stringify({ secretKey: newSecret, qrHash: hash })
+    );
+    setSecretMessage("Secret key generated and saved locally.");
+  };
+
+  const handleChangeSecret = async () => {
+    if (!account || !userTicket) return;
+    const newSecret = generateSecret();
+    const hash = ethers.keccak256(
+      ethers.solidityPacked(["uint256", "string"], [userTicket.id, newSecret])
+    );
+    setSecretKey(newSecret);
+    setQrHash(hash);
+    localStorage.setItem(
+      `${account.toLowerCase()}_${userTicket.id}`,
+      JSON.stringify({ secretKey: newSecret, qrHash: hash })
+    );
+    setSecretMessage("Secret key rotated successfully.");
+  };
+
+  // Secret key handling for the owned ticket
+  const [secretKey, setSecretKey] = useState("");
+  const [qrHash, setQrHash] = useState("");
+  const [secretMessage, setSecretMessage] = useState("");
 
   // Auth guard
   useEffect(() => {
@@ -76,17 +317,40 @@ export default function DashboardPage() {
       setRtb(rtbStatus);
 
       // Load user's ticket if they own one
-      if (owns) {
-        try {
-          const ticket = await readMyTicket();
-          const ticketId = await readOwnerTicket(account);
-          setUserTicket({ ...ticket, id: ticketId });
-        } catch (err) {
-          console.error("Failed to read user ticket:", err);
-        }
-      } else {
-        setUserTicket(null);
-      }
+          if (owns) {
+            try {
+              const ticket = await readMyTicket();
+              const ticketId = await readOwnerTicket(account);
+
+              if (!ticketId || ticketId === 0) {
+                console.error("Could not resolve ticketId for", account);
+                // không return — để finally chạy bình thường
+              } else {
+                setUserTicket({ ...ticket, id: ticketId });
+                const stored = localStorage.getItem(`${account.toLowerCase()}_${ticketId}`);
+                if (stored) {
+                  const parsed = JSON.parse(stored);
+                  setSecretKey(parsed.secretKey || "");
+                  setQrHash(parsed.qrHash || "");
+                }
+              }
+
+              setUserTicket({ ...ticket, id: ticketId });
+              // Load any locally stored secret for this ticket.
+              const stored = localStorage.getItem(`${account.toLowerCase()}_${ticketId}`);
+              if (stored) {
+                const parsed = JSON.parse(stored);
+                setSecretKey(parsed.secretKey || "");
+                setQrHash(parsed.qrHash || "");
+              }
+            } catch (err) {
+              console.error("Failed to read user ticket:", err);
+            }
+          } else {
+            setUserTicket(null);
+            setSecretKey("");
+            setQrHash("");
+          }
     } catch (err) {
       console.error("Failed to load contract data:", err);
     } finally {
@@ -294,11 +558,98 @@ ${decision.reason}`}
                     {userTicket.commitment}
                   </span>
                 </p>
+                {/* Secret key and QR handling */}
+                {secretKey ? (
+                  <>
+                    <p><strong>Secret Key:</strong> <em>Stored locally</em></p>
+                    <p><strong>QR Hash:</strong> <span className="mono" style={{ fontSize: "0.8rem" }}>{qrHash}</span></p>
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <QRCodeCanvas value={qrHash} size={180} />
+                    </div>
+                    <button className="btn btn-secondary" onClick={handleChangeSecret} disabled={transferLoading}>Change Secret Key</button>
+                    {secretMessage && <p style={{ marginTop: "0.5rem" }}>{secretMessage}</p>}
+                  </>
+                ) : (
+                  <>
+                    <p>Ticket security setup required.</p>
+                    <button className="btn primary-cta" onClick={handleGenerateSecret}>Generate Secret Key</button>
+                    {secretMessage && <p style={{ marginTop: "0.5rem" }}>{secretMessage}</p>}
+                  </>
+                )}
               </div>
+              {/* Transfer UI – only for VALID tickets */}
+              {statusToString(userTicket.status) === "VALID" && (
+                <div className="transfer-section" style={{ marginTop: "1rem" }}>
+                  <h4>Transfer Ticket</h4>
+                  <input
+                    type="text"
+                    placeholder="Recipient wallet address"
+                    value={transferRecipient}
+                    onChange={(e) => setTransferRecipient(e.target.value)}
+                    style={{ width: "100%", marginBottom: "0.5rem" }}
+                  />
+                  <button
+                    className="btn primary-cta"
+                    onClick={handleTransfer}
+                    disabled={transferLoading}
+                  >
+                    {transferLoading ? "Transferring…" : "Confirm Transfer"}
+                  </button>
+                  {transferMessage && <p style={{ marginTop: "0.5rem" }}>{transferMessage}</p>}
+                </div>
+              )}
             </div>
           )}
         </section>
       </main>
+
+      {transferModal && (
+        <div style={{
+          position:"fixed", inset:0, background:"rgba(0,0,0,0.45)",
+          display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000
+        }}>
+          <div style={{
+            background:"var(--surface-2)", border:"0.5px solid var(--border)",
+            borderRadius:12, padding:"1.5rem", width:"100%", maxWidth:480, margin:"1rem"
+          }}>
+            <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem"}}>
+              <p style={{margin:0, fontWeight:500}}>✅ Transfer complete</p>
+              <button onClick={() => setTransferModal(null)} style={{background:"none", border:"none", cursor:"pointer", color:"var(--text-secondary)", fontSize:20}}>✕</button>
+            </div>
+
+            <div style={{background:"var(--bg-warning)", border:"0.5px solid var(--border-warning)", borderRadius:"var(--radius)", padding:"10px 14px", marginBottom:"1.25rem", fontSize:13, color:"var(--text-warning)"}}>
+              ⚠️ Gửi secret key dưới đây cho recipient qua kênh an toàn. Không có nó, họ không thể check-in.
+            </div>
+
+            {[
+              { label: "Ticket", value: `#${userTicket?.id} → ${transferModal.recipientAddr.slice(0,6)}...${transferModal.recipientAddr.slice(-4)}` },
+              { label: "Secret key", value: transferModal.secret, mono: true },
+              { label: "QR hash", value: transferModal.qrHash, mono: true },
+              { label: "Transaction", value: `${transferModal.txHash.slice(0,10)}...` },
+            ].map(({ label, value, mono }) => (
+              <div key={label} style={{marginBottom:"1rem"}}>
+                <p style={{fontSize:12, color:"var(--text-secondary)", margin:"0 0 4px", textTransform:"uppercase", letterSpacing:"0.04em"}}>{label}</p>
+                <div style={{display:"flex", gap:8, alignItems:"center"}}>
+                  <div style={{flex:1, background:"var(--surface-1)", border:"0.5px solid var(--border)", borderRadius:"var(--radius)", padding:"8px 12px", fontFamily: mono?"var(--font-mono)":"inherit", fontSize:13, wordBreak:"break-all"}}>
+                    {value}
+                  </div>
+                  {mono && (
+                    <button onClick={() => navigator.clipboard.writeText(value)}
+                      style={{padding:"8px 12px", borderRadius:"var(--radius)", border:"0.5px solid var(--border-strong)", background:"none", cursor:"pointer", fontSize:13, whiteSpace:"nowrap", color:"var(--text-primary)"}}>
+                      Copy
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            <button onClick={() => setTransferModal(null)}
+              style={{width:"100%", marginTop:"0.5rem", padding:10, borderRadius:"var(--radius)", border:"0.5px solid var(--border-strong)", background:"none", cursor:"pointer", fontSize:14, fontWeight:500, color:"var(--text-primary)"}}>
+              Done
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

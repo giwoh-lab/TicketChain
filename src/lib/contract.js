@@ -15,6 +15,38 @@ let signer = null;
 let contract = null; // read-only (provider)
 let contractRW = null; // read-write (signer)
 
+// -----------------------------------------------------------------
+// Helper: retry wrapper for RPC calls that may be rate‑limited.
+// -----------------------------------------------------------------
+/**
+ * Executes an async operation with exponential backoff retries when a JSON‑RPC
+ * rate‑limit error (`code: -32005`) is encountered. Retries up to
+ * `maxAttempts` (default 3) before re‑throwing the error.
+ *
+ * @param {() => Promise<any>} fn - The async function to execute.
+ * @param {number} maxAttempts - Maximum retry attempts.
+ * @param {number} baseDelayMs - Base delay in milliseconds for the first retry.
+ * @returns {Promise<any>} The resolved value of `fn`.
+ */
+async function withRetry(fn, maxAttempts = 3, baseDelayMs = 500) {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (err) {
+      const code = err?.error?.code ?? err?.code;
+      if (code === -32005 && attempt < maxAttempts) {
+        const delay = baseDelayMs * 2 ** attempt;
+        console.warn(`Rate limited (attempt ${attempt + 1}/${maxAttempts}); retrying in ${delay}ms`);
+        await new Promise((r) => setTimeout(r, delay));
+        attempt += 1;
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 /**
  * Initialise (or re-initialise) the provider, signer, and contract
  * whenever the wallet/page state changes.
@@ -57,43 +89,73 @@ async function rc() {
 }
 
 export async function readOwner() {
-  return (await rc()).owner();
+  return withRetry(async () => {
+    const c = await rc();
+    return c.owner();
+  });
 }
 
 export async function readCheckInOperator() {
-  return (await rc()).checkInOperator();
+  return withRetry(async () => {
+    const c = await rc();
+    return c.checkInOperator();
+  });
 }
 
 export async function readIsSaleOpen() {
-  return (await rc()).isSaleOpen();
+  return withRetry(async () => {
+    const c = await rc();
+    return c.isSaleOpen();
+  });
 }
 
 export async function readOpeningTime() {
-  return Number(await (await rc()).openingTime());
+  return withRetry(async () => {
+    const c = await rc();
+    return Number(c.openingTime());
+  });
 }
 
 export async function readClosingTime() {
-  return Number(await (await rc()).closingTime());
+  return withRetry(async () => {
+    const c = await rc();
+    return Number(c.closingTime());
+  });
 }
 
 export async function readTicketPrice() {
-  return (await rc()).ticketPrice();
+  return withRetry(async () => {
+    const c = await rc();
+    return c.ticketPrice();
+  });
 }
 
 export async function readMaxTickets() {
-  return Number(await (await rc()).maxTickets());
+  return withRetry(async () => {
+    const c = await rc();
+    return Number(c.maxTickets());
+  });
 }
 
 export async function readNextTicketId() {
-  return Number(await (await rc()).nextTicketId());
+  return withRetry(async () => {
+    const c = await rc();
+    return Number(c.nextTicketId());
+  });
 }
 
 export async function readHasTicket(addr) {
-  return (await rc()).hasTicket(addr);
+  return withRetry(async () => {
+    const c = await rc();
+    return c.hasTicket(addr);
+  });
 }
 
 export async function readGetRTB(addr) {
-  return (await rc()).getRTB(addr);
+  return withRetry(async () => {
+    const c = await rc();
+    return c.getRTB(addr);
+  });
 }
 
 export async function readMyTicket() {
@@ -120,10 +182,16 @@ export async function readOwnerTicket(addr) {
   }
   // Fallback: iterate tickets 1..nextTicketId to find the one owned by addr
   const nextId = await readNextTicketId();
+
+  console.log("Iterating tickets, nextId:", nextId);
+
   const normalised = ethers.getAddress(addr);
   for (let i = 1; i < nextId; i++) {
     try {
       const t = await c.getTicket(i);
+
+      console.log(`Ticket ${i} owner:`, t.owner);
+
       if (ethers.getAddress(t.owner) === normalised) return i;
     } catch {
       continue;
@@ -131,6 +199,8 @@ export async function readOwnerTicket(addr) {
   }
   return 0;
 }
+
+
 
 // ── Write helpers (ticket purchase) ──────────────────────────────────
 
@@ -141,12 +211,14 @@ export async function buyTicketOfficial(commitment, priceWei) {
   return parsePurchaseReceipt(receipt, tx.hash);
 }
 
+
 export async function buyTicketRTB(commitment, priceWei) {
   await ensureSigner();
   const tx = await contractRW.buyTicketRTB(commitment, { value: priceWei });
   const receipt = await tx.wait();
   return parsePurchaseReceipt(receipt, tx.hash);
 }
+
 
 function parsePurchaseReceipt(receipt, txHash) {
   let ticketId;
@@ -163,6 +235,24 @@ function parsePurchaseReceipt(receipt, txHash) {
     }
   }
   return { ticketId, txHash };
+}
+
+// ── Write helper for ticket transfer ───────────────────────────────────────
+
+// Transfer a ticket to another address. The caller does NOT provide a commitment.
+export async function transferTicket(to, ticketId, newCommitment) {
+  await ensureSigner();
+  const tx = await contractRW.transferTicket(to, ticketId, newCommitment);
+  await tx.wait();
+  return tx.hash;
+}
+
+// Set or update the commitment for the caller's ticket.
+export async function setTicketCommitment(ticketId, commitment) {
+  await ensureSigner();
+  const tx = await contractRW.setTicketCommitment(ticketId, commitment);
+  await tx.wait();
+  return tx.hash;
 }
 
 // ── Admin write helpers ──────────────────────────────────────────────

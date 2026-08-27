@@ -451,13 +451,10 @@ async function transferTicket() {
   const to = prompt("Enter the recipient address:");
   if (!to) return alert("Recipient address required.");
 
-  const newSecret = prompt("Enter a NEW secret key for the recipient (keep it safe):");
-  if (!newSecret) return alert("New secret key required.");
-  const newCommitment = ethers.keccak256(ethers.toUtf8Bytes(newSecret));
-
+  // Transfer does not require a secret from the sender.
   setStatus("pending", `Transferring ticket #${ticketId}…`);
   try {
-    const tx = await contract.transferTicket(to, ticketId, newCommitment);
+    const tx = await contract.transferTicket(to, ticketId);
     await tx.wait();
     setStatus("confirmed", `Ticket #${ticketId} transferred to ${shortAddress(to)}.`);
     await refreshAllReadData();
