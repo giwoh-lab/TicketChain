@@ -226,6 +226,7 @@
           external
           payable
           saleOpen
+          noTicket
       {
           _purchaseTicket(commitment);
       }
@@ -239,6 +240,7 @@
           external
           payable
           rtbAvailable
+          noTicket
       {
           // RTB purchases are only allowed BEFORE the official sale starts.
           require(block.timestamp < openingTime, "RTB only before opening time");
@@ -348,6 +350,14 @@
           returns (Ticket memory)
       {
           return tickets[ticketId];
+      }
+
+      function getMyTicketId() external view returns (uint256) {
+          return ownerTicket[msg.sender];
+      }
+
+      function getTicketIdByOwner(address account) external view returns (uint256) {
+          return ownerTicket[account];
       }
 
       function hasTicket(address account) external view returns (bool) {

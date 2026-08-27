@@ -112,14 +112,14 @@ export async function readIsSaleOpen() {
 export async function readOpeningTime() {
   return withRetry(async () => {
     const c = await rc();
-    return Number(c.openingTime());
+    return Number(await c.openingTime());
   });
 }
 
 export async function readClosingTime() {
   return withRetry(async () => {
     const c = await rc();
-    return Number(c.closingTime());
+    return Number(await c.closingTime());
   });
 }
 
@@ -133,14 +133,14 @@ export async function readTicketPrice() {
 export async function readMaxTickets() {
   return withRetry(async () => {
     const c = await rc();
-    return Number(c.maxTickets());
+    return Number(await c.maxTickets());
   });
 }
 
 export async function readNextTicketId() {
   return withRetry(async () => {
     const c = await rc();
-    return Number(c.nextTicketId());
+    return Number(await c.nextTicketId());
   });
 }
 
@@ -158,11 +158,27 @@ export async function readGetRTB(addr) {
   });
 }
 
+// export async function readMyTicket() {
+//   // getMyTicket() uses msg.sender, so it needs the signer
+//   await ensureSigner();
+//   const t = await contractRW.getMyTicket();
+
+//   console.log(t);
+
+//   return { owner: t.owner, status: Number(t.currStatus), commitment: t.commitment };
+// }
 export async function readMyTicket() {
-  // getMyTicket() uses msg.sender, so it needs the signer
   await ensureSigner();
+
+  const ticketId = await contractRW.getMyTicketId();
   const t = await contractRW.getMyTicket();
-  return { owner: t.owner, status: Number(t.currStatus), commitment: t.commitment };
+
+  return {
+    ticketId: ticketId.toString(),
+    owner: t.owner,
+    status: Number(t.currStatus),
+    commitment: t.commitment
+  };
 }
 
 /**
@@ -170,36 +186,46 @@ export async function readMyTicket() {
  * The contract may expose a public `ownerTicket(address)` mapping.
  * If not available in the ABI, fall back to iterating tickets.
  */
+// export async function readOwnerTicket(addr) {
+//   const c = await rc();
+//   // Try calling ownerTicket directly (public mapping getter)
+//   if (c.ownerTicket) {
+//     console.log("=== DASHBOARD TICKET ===");
+//     console.log("wallet:", address);
+//     console.log("ticket:", ticket);
+//     console.log("ticketId:", ticketId);
+
+//     try {
+//       return Number(await c.ownerTicket(addr));
+//     } catch {
+//       // fall through to iteration
+//     }
+//   }
+//   // Fallback: iterate tickets 1..nextTicketId to find the one owned by addr
+//   const nextId = await readNextTicketId();
+
+//   console.log("Iterating tickets, nextId:", nextId);
+
+//   const normalised = ethers.getAddress(addr);
+//   for (let i = 1; i < nextId; i++) {
+//     try {
+//       const t = await c.getTicket(i);
+
+//       console.log(`Ticket ${i} owner:`, t.owner);
+
+//       if (ethers.getAddress(t.owner) === normalised) return i;
+//     } catch {
+//       continue;
+//     }
+//   }
+//   return 0;
+// }
 export async function readOwnerTicket(addr) {
-  const c = await rc();
-  // Try calling ownerTicket directly (public mapping getter)
-  if (c.ownerTicket) {
-    try {
-      return Number(await c.ownerTicket(addr));
-    } catch {
-      // fall through to iteration
-    }
-  }
-  // Fallback: iterate tickets 1..nextTicketId to find the one owned by addr
-  const nextId = await readNextTicketId();
-
-  console.log("Iterating tickets, nextId:", nextId);
-
-  const normalised = ethers.getAddress(addr);
-  for (let i = 1; i < nextId; i++) {
-    try {
-      const t = await c.getTicket(i);
-
-      console.log(`Ticket ${i} owner:`, t.owner);
-
-      if (ethers.getAddress(t.owner) === normalised) return i;
-    } catch {
-      continue;
-    }
-  }
-  return 0;
+  return withRetry(async () => {
+    const c = await rc();
+    return Number(await c.getTicketIdByOwner(addr));
+  });
 }
-
 
 
 // ── Write helpers (ticket purchase) ──────────────────────────────────
@@ -220,21 +246,54 @@ export async function buyTicketRTB(commitment, priceWei) {
 }
 
 
+// function parsePurchaseReceipt(receipt, txHash) {
+//   let ticketId;
+//   const iface = new ethers.Interface(ABI);
+//   for (const log of receipt.logs) {
+//     try {
+//       const parsed = iface.parseLog(log);
+//       if (parsed && parsed.name === "TicketCreated") {
+//         ticketId = Number(parsed.args.ticketId);
+//         break;
+//       }
+//     } catch {
+//       // Ignore logs from other contracts
+//     }
+//   }
+//   return { ticketId, txHash };
+// }
 function parsePurchaseReceipt(receipt, txHash) {
-  let ticketId;
-  const iface = new ethers.Interface(ABI);
-  for (const log of receipt.logs) {
-    try {
-      const parsed = iface.parseLog(log);
-      if (parsed && parsed.name === "TicketCreated") {
-        ticketId = Number(parsed.args.ticketId);
-        break;
-      }
-    } catch {
-      // Ignore logs from other contracts
+    const iface = new ethers.Interface(ABI);
+
+    console.log("=== PARSING PURCHASE RECEIPT ===");
+    console.log("Receipt:", receipt);
+    console.log("Logs:", receipt.logs);
+
+    for (const log of receipt.logs) {
+        try {
+            const parsed = iface.parseLog(log);
+
+            if (parsed?.name === "TicketCreated") {
+                const ticketId = parsed.args.ticketId;
+
+                console.log(
+                    "TicketCreated found:",
+                    ticketId.toString()
+                );
+
+                return {
+                    ticketId: ticketId.toString(),
+                    txHash
+                };
+            }
+        } catch {
+            // Ignore unrelated logs
+        }
     }
-  }
-  return { ticketId, txHash };
+
+    throw new Error(
+        "Transaction succeeded, but TicketCreated event was not found."
+    );
 }
 
 // ── Write helper for ticket transfer ───────────────────────────────────────

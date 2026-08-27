@@ -100,6 +100,11 @@ export default function PaymentPage() {
         result = await buyTicketRTB(commitment, priceWei);
       }
 
+      console.log("=== TICKET RESULT FROM CONTRACT ===");
+      console.log(result);
+      console.log("ticketId:", result?.ticketId);
+      console.log("txHash:", result?.txHash);
+
       setTicketResult(result);
       setStep(STEPS.SUCCESS);
 
