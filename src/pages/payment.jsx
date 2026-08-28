@@ -5,7 +5,6 @@ import { useAuth } from "../hooks/use-auth";
 import { useWallet } from "../hooks/use-wallet";
 import {
   ethers,
-  getContract,
   readTicketPrice,
   readIsSaleOpen,
   readGetRTB,
@@ -58,11 +57,21 @@ export default function PaymentPage() {
 
   // Load ticket price
   useEffect(() => {
-    if (!account || !getContract()) return;
-    readTicketPrice().then((p) => {
-      setPriceWei(p);
-      setPriceEth(ethers.formatEther(p));
-    }).catch(console.error);
+    if (!account) return;
+    let cancelled = false;
+    async function loadPrice() {
+      try {
+        const p = await readTicketPrice();
+        if (!cancelled) {
+          setPriceWei(p);
+          setPriceEth(ethers.formatEther(p));
+        }
+      } catch (err) {
+        console.error("Failed to load ticket price:", err);
+      }
+    }
+    loadPrice();
+    return () => { cancelled = true; };
   }, [account]);
 
   async function handlePay() {
@@ -83,6 +92,14 @@ export default function PaymentPage() {
     // Step 3: Mint ticket on-chain
     setStep(STEPS.MINTING);
     try {
+      // Ensure the price is loaded before sending the transaction.
+      let finalPriceWei = priceWei;
+      if (!finalPriceWei) {
+        finalPriceWei = await readTicketPrice();
+        setPriceWei(finalPriceWei);
+        setPriceEth(ethers.formatEther(finalPriceWei));
+      }
+
       const [isSaleOpen, hasTicket, rtb] = await Promise.all([
         readIsSaleOpen(),
         readHasTicket(account),
@@ -95,9 +112,9 @@ export default function PaymentPage() {
       const commitment = ethers.keccak256(ethers.toUtf8Bytes(secretKey));
       let result;
       if (isSaleOpen) {
-        result = await buyTicketOfficial(commitment, priceWei);
+        result = await buyTicketOfficial(commitment, finalPriceWei);
       } else {
-        result = await buyTicketRTB(commitment, priceWei);
+        result = await buyTicketRTB(commitment, finalPriceWei);
       }
 
       console.log("=== TICKET RESULT FROM CONTRACT ===");

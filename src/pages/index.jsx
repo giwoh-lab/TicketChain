@@ -7,6 +7,7 @@ import { ethers } from "ethers";
 import {
   getContract,
   shortAddress,
+  readOwner,
   readIsSaleOpen,
   readOpeningTime,
   readClosingTime,
@@ -42,6 +43,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState("--:--:--");
   const [buyError, setBuyError] = useState("");
+  const [isOwner, setIsOwner] = useState(false);
 
   const [transferModal, setTransferModal] = useState(null);
 

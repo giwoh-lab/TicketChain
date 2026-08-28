@@ -230,8 +230,80 @@ export async function readOwnerTicket(addr) {
 
 // ── Write helpers (ticket purchase) ──────────────────────────────────
 
+/**
+ * Pre-flight check: read on-chain state and throw a descriptive error
+ * if a purchase would revert, because Sepolia RPC nodes often return
+ * data=null on estimateGas failures.
+ */
+async function preflightPurchaseCheck(buyerAddress, priceWei, mode) {
+  const c = await rc();
+  const [isSaleOpen, hasTicket, onChainPrice, nextId, maxTickets, balance] =
+    await Promise.all([
+      c.isSaleOpen(),
+      c.hasTicket(buyerAddress),
+      c.ticketPrice(),
+      c.nextTicketId(),
+      c.maxTickets(),
+      provider.getBalance(buyerAddress),
+    ]);
+
+  console.log("=== PREFLIGHT CHECK ===");
+  console.log("mode:", mode);
+  console.log("buyer:", buyerAddress);
+  console.log("balance (ETH):", ethers.formatEther(balance));
+  console.log("isSaleOpen:", isSaleOpen);
+  console.log("hasTicket:", hasTicket);
+  console.log("onChainPrice (wei):", onChainPrice.toString());
+  console.log("priceWei sent:", priceWei?.toString());
+  console.log("nextTicketId:", nextId.toString());
+  console.log("maxTickets:", maxTickets.toString());
+
+  // Check balance first – Sepolia RPC nodes return an opaque
+  // "Internal JSON-RPC error" when the sender can't afford value + gas.
+  if (BigInt(balance) < BigInt(onChainPrice)) {
+    throw new Error(
+      `Insufficient Sepolia ETH. You have ${ethers.formatEther(balance)} ETH ` +
+      `but the ticket costs ${ethers.formatEther(onChainPrice)} ETH. ` +
+      `Get testnet ETH from a Sepolia faucet.`
+    );
+  }
+
+  if (hasTicket) {
+    throw new Error("Your wallet already owns a ticket.");
+  }
+  if (BigInt(nextId) > BigInt(maxTickets)) {
+    throw new Error("Tickets are sold out.");
+  }
+  if (mode === "official" && !isSaleOpen) {
+    throw new Error("Official sale is not open (check opening/closing times).");
+  }
+  if (mode === "rtb") {
+    const rtb = await c.getRTB(buyerAddress);
+    if (!rtb) throw new Error("RTB not granted for this wallet.");
+  }
+  // Ensure the value matches the on-chain price exactly.
+  if (priceWei == null || BigInt(priceWei) !== BigInt(onChainPrice)) {
+    throw new Error(
+      `Incorrect ETH amount. Contract expects ${ethers.formatEther(onChainPrice)} ETH ` +
+      `(${onChainPrice.toString()} wei), but got ${priceWei?.toString() ?? "null"} wei.`
+    );
+  }
+}
+
 export async function buyTicketOfficial(commitment, priceWei) {
   await ensureSigner();
+  const buyer = await signer.getAddress();
+  await preflightPurchaseCheck(buyer, priceWei, "official");
+
+  // Use staticCall first to surface the revert reason if estimateGas
+  // would fail with data=null on this RPC endpoint.
+  try {
+    await contractRW.buyTicketOfficial.staticCall(commitment, { value: priceWei });
+  } catch (simErr) {
+    const reason = simErr?.reason || simErr?.revert?.args?.[0] || simErr?.shortMessage || simErr?.message;
+    throw new Error(`Contract would revert: ${reason}`);
+  }
+
   const tx = await contractRW.buyTicketOfficial(commitment, { value: priceWei });
   const receipt = await tx.wait();
   return parsePurchaseReceipt(receipt, tx.hash);
@@ -240,6 +312,16 @@ export async function buyTicketOfficial(commitment, priceWei) {
 
 export async function buyTicketRTB(commitment, priceWei) {
   await ensureSigner();
+  const buyer = await signer.getAddress();
+  await preflightPurchaseCheck(buyer, priceWei, "rtb");
+
+  try {
+    await contractRW.buyTicketRTB.staticCall(commitment, { value: priceWei });
+  } catch (simErr) {
+    const reason = simErr?.reason || simErr?.revert?.args?.[0] || simErr?.shortMessage || simErr?.message;
+    throw new Error(`Contract would revert: ${reason}`);
+  }
+
   const tx = await contractRW.buyTicketRTB(commitment, { value: priceWei });
   const receipt = await tx.wait();
   return parsePurchaseReceipt(receipt, tx.hash);
