@@ -1,4 +1,4 @@
-# BẰNG CHỨNG — ChainPass MVP
+# BẰNG CHỨNG — TicketChain MVP
 
 Bằng chứng triển khai và giao dịch cho hợp đồng ConcertTicket trên Ethereum Sepolia Testnet.
 

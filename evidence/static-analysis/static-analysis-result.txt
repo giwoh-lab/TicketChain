@@ -1,0 +1,88 @@
+STATIC ANALYSIS RESULT — ConcertTicket
+=======================================
+
+PROJECT
+-------
+Network:              Ethereum Sepolia Testnet (Chain ID: 11155111)
+Contract:             0xD3CB1b9A39a14753A92d869EEC1E45237C1e5Ae4
+Deployment block:     (xem Etherscan)
+Deployment tx:        0x6790a3f59b48442ec441fe53862cb934e90f7195f401eb65797353fe6dd63a03
+Compiler:             Solidity 0.8.24
+Optimizer:            Disabled
+
+UNIT TEST
+---------
+Framework:            Foundry (forge test)
+Test file:            test/concertTicket.t.sol
+Total tests:          45
+Passed:               45
+Failed:               0
+Skipped:              0
+Finished in:          3.10ms (16.30ms CPU time)
+
+E2E DEMO SCRIPT
+---------------
+Script:               script/Demo.s.sol:DemoConcertTicket
+Network:              Sepolia (Chain ID: 11155111)
+Status:               ONCHAIN EXECUTION COMPLETE & SUCCESSFUL
+
+Transactions broadcast:
+  [1] grantRTB(address)
+      Hash:  0x43eb39debcbc548960f4d583b461e593d909df57bf46911c11527c717bc9a9eb
+      Block: 11589849
+      Gas:   47981
+      Paid:  0.000049974528598452 ETH
+
+  [2] buyTicketRTB(bytes32)
+      Hash:  0xbcda3dac9cd399d8127bc7552443f6aa46b7067c272d30d254827197eb2a81d5
+      Block: 11589850
+      Gas:   105007
+      Paid:  0.000105309355580695 ETH
+
+  [3] useTicket(uint256)
+      Hash:  0xa15f2460981c131ed2bb598c8e9f885844c90ef6b0679558a705c9094e5aaa8b
+      Block: 11589851
+      Gas:   32766
+      Paid:  0.000031770244733196 ETH
+
+Total gas used:       185754
+Total ETH paid:       0.000187054128912343 ETH
+
+SLITHER FINDINGS
+----------------
+Tool:                 Slither (Trail of Bits)
+Detectors run:        100
+Results found:        5
+
+1. block.timestamp
+   Scope:    setOpeningTime, setClosingTime, buyTicketRTB, isSaleOpen
+   Status:   ACCEPTED
+   Reason:   Sale window tính theo ngày/giờ; drift ±15s của miner không ảnh hưởng
+
+2. Low-level call in withdraw()
+   Scope:    (bool ok,) = owner.call{value: amount}("")
+   Status:   VERIFIED SECURE
+   Reason:   Cách gửi ETH được khuyến nghị; return value được check; pattern CEI áp dụng đúng
+
+3. Access Control — onlyOwner
+   Scope:    setOpeningTime, setClosingTime, setTicketPrice, setMaxTickets,
+             grantRTB, revokeRTB, invalidateTicket, withdraw, transferOwnership,
+             setCheckInOperator
+   Status:   VERIFIED SECURE
+
+4. Access Control — onlyCheckIn
+   Scope:    useTicket
+   Status:   VERIFIED SECURE
+
+5. Terminal State Protection
+   Scope:    Valid → Used / Invalid (terminal); no exit from Used or Invalid
+   Status:   VERIFIED SECURE
+
+INTEGRATION STATUS
+------------------
+Contract deployment:      VERIFIED (Etherscan source match)
+Unit tests (45/45):       PASS
+E2E demo on Sepolia:      PASS
+Frontend integration:     VERIFIED
+E2E user testing:         NOT YET VERIFIED (Dành riêng cho người dùng tự kiểm tra)
+Cross-device testing:     NOT YET VERIFIED (Dành riêng cho người dùng tự kiểm tra)

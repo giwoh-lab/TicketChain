@@ -1,0 +1,37 @@
+mac@Macs-MacBook-Pro contracts % forge script script/Deploy.s.sol:DeployConcertTicket \
+  --rpc-url $SEPOLIA_RPC_URL \
+  --broadcast
+Warning: loading project dotenv files:
+  "/Users/mac/Developer/Active/concert-tickets-management/contracts/.env"
+Project environment variables can affect executable and library loading. Only run commands in projects you trust.
+[⠊] Compiling...
+No files changed, compilation skipped
+Script ran successfully.
+
+== Return ==
+ticket: contract ConcertTicket 0xD3CB1b9A39a14753A92d869EEC1E45237C1e5Ae4
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 11155111
+
+Estimated max fee per gas: 2.128900161 gwei
+Estimated base fee per gas: 1.059726953 gwei
+Estimated max priority fee per gas: 0.009446255 gwei
+
+Estimated total gas used for script: 4008200
+
+Estimated amount required: 0.0085330576253202 ETH
+
+==========================
+                                                                                                                        ##### sepolia                                                                                                           ✅  [Success] Hash: 0x6790a3f59b48442ec441fe53862cb934e90f7195f401eb65797353fe6dd63a03                                  Contract: ConcertTicket                                                                                                 Contract Address: 0xD3CB1b9A39a14753A92d869EEC1E45237C1e5Ae4                                                            Block: 11583540                                                                                                         Paid: 0.00319393154165017 ETH (3083231 gas * 1.03590407 gwei)                                                                                                                                                                                   ✅ Sequence #1 on sepolia | Total Paid: 0.00319393154165017 ETH (3083231 gas * avg 1.03590407 gwei)                                                                                                                                             
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /Users/mac/Developer/Active/concert-tickets-management/contracts/broadcast/Deploy.s.sol/11155111/run-latest.json
+
+Sensitive values saved to: /Users/mac/Developer/Active/concert-tickets-management/contracts/cache/Deploy.s.sol/11155111/run-latest.json

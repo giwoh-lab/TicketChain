@@ -1,4 +1,4 @@
-# ChainPass — Ứng dụng Quản lý Vé Concert trên Blockchain
+# TicketChain — Ứng dụng Quản lý Vé Concert trên Blockchain
 
 Hệ thống quản lý vé concert dựa trên blockchain Ethereum (Sepolia testnet). Vé được mint dưới dạng bản ghi on-chain với cơ chế commitment mật mã để check-in bằng QR code an toàn.
 
@@ -7,6 +7,7 @@ Hệ thống quản lý vé concert dựa trên blockchain Ethereum (Sepolia tes
 | Tầng | Công nghệ |
 |---|---|
 | Smart Contract | Solidity ^0.8.24, triển khai trên Sepolia |
+| Framework test | Foundry (forge) |
 | Frontend | Next.js 16, React 19 |
 | Blockchain SDK | ethers.js v6 |
 | QR Code | qrcode.react v4 |
@@ -16,8 +17,8 @@ Hệ thống quản lý vé concert dựa trên blockchain Ethereum (Sepolia tes
 ## Hợp đồng thông minh
 
 - **Mạng:** Ethereum Sepolia Testnet
-- **Địa chỉ:** `0x73337ADA0F4ab56B36CFe62B88Cfd9e6DD70053f`
-- **Đã xác minh:** [Etherscan](https://sepolia.etherscan.io/address/0x73337ada0f4ab56b36cfe62b88cfd9e6dd70053f#code)
+- **Địa chỉ:** `0xD3CB1b9A39a14753A92d869EEC1E45237C1e5Ae4`
+- **Đã xác minh:** [Etherscan](https://sepolia.etherscan.io/address/0xD3CB1b9A39a14753A92d869EEC1E45237C1e5Ae4#code)
 
 ## Tính năng
 
@@ -56,23 +57,31 @@ VALID → INVALID   (admin thu hồi, ví dụ hoàn tiền)
 
 ```
 concert-tickets-management/
-├── contracts/
-│   └── Ticket.sol              # Hợp đồng ConcertTicket
-├── abi.json                    # ABI của hợp đồng
-└── src/
+├── contracts/                      # Foundry project
+│   ├── src/
+│   │   └── concertTicket.sol       # Hợp đồng ConcertTicket
+│   ├── test/
+│   │   └── concertTicket.t.sol     # 45 unit tests
+│   ├── script/
+│   │   ├── Deploy.s.sol            # Script deploy
+│   │   └── Demo.s.sol              # Script E2E demo
+│   ├── foundry.toml
+│   └── .env.example
+├── abi.json                        # ABI của hợp đồng
+└── src/                            # Next.js frontend
     ├── pages/
-    │   ├── index.jsx           # Dashboard — mua, xem, chuyển nhượng vé
-    │   ├── payment.jsx         # Luồng thanh toán + mint on-chain
-    │   ├── admin.jsx           # Bảng điều khiển admin
-    │   ├── login.jsx           # Trang đăng nhập
-    │   └── register.jsx        # Trang đăng ký
+    │   ├── index.jsx               # Dashboard
+    │   ├── payment.jsx             # Thanh toán + mint
+    │   ├── admin.jsx               # Admin panel
+    │   ├── login.jsx
+    │   └── register.jsx
     ├── lib/
-    │   ├── contract.js         # Các hàm đọc/ghi ethers.js
-    │   ├── constants.js        # CONTRACT_ADDRESS, SEPOLIA_CHAIN_ID
-    │   └── auth.js             # Xác thực demo (localStorage)
+    │   ├── contract.js             # ethers.js helpers
+    │   ├── constants.js            # CONTRACT_ADDRESS, CHAIN_ID
+    │   └── auth.js
     ├── hooks/
-    │   ├── use-auth.js         # Hook quản lý trạng thái auth
-    │   └── use-wallet.js       # Hook kết nối MetaMask
+    │   ├── use-auth.js
+    │   └── use-wallet.js
     └── styles/
         └── style.css
 ```
@@ -80,22 +89,96 @@ concert-tickets-management/
 ## Hướng dẫn cài đặt
 
 ### Yêu cầu
+
 - Node.js 18+
+- [Foundry](https://getfoundry.sh/) (`forge`, `cast`, `anvil`)
 - Tiện ích mở rộng MetaMask trên trình duyệt
 - ETH Sepolia testnet ([faucet](https://sepoliafaucet.com))
 
-### Cài đặt
+### 1. Clone repo
 
 ```bash
-git clone <repo>
+git clone <repo-url>
 cd concert-tickets-management
+```
+
+### 2. Cài đặt frontend
+
+```bash
 npm install
+```
+
+### 3. Cài đặt Foundry dependencies
+
+```bash
+cd contracts
+forge install
+```
+
+### 4. Cấu hình biến môi trường
+
+```bash
+cp contracts/.env.example contracts/.env
+```
+
+Điền vào `contracts/.env`:
+
+```dotenv
+SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+PRIVATE_KEY=<private key của admin/owner>
+USER_PRIVATE_KEY=<private key của user mua vé>
+```
+
+> ⚠️ Không bao giờ commit file `.env` lên Git.
+
+### 5. Chạy unit test
+
+```bash
+cd contracts
+forge test -vv
+```
+
+Kết quả mong đợi: **45 tests passed, 0 failed**.
+
+### 6. Deploy contract (tuỳ chọn)
+
+```bash
+cd contracts
+forge script script/Deploy.s.sol:DeployConcertTicket \
+  --rpc-url "$SEPOLIA_RPC_URL" \
+  --broadcast
+```
+
+Sau khi deploy, cập nhật `src/lib/constants.js`:
+
+```js
+export const CONTRACT_ADDRESS = "<địa chỉ contract mới>";
+export const SEPOLIA_CHAIN_ID = 11155111;
+```
+
+Và cập nhật `abi.json` từ `contracts/out/ConcertTicket.sol/ConcertTicket.json`.
+
+### 7. Chạy E2E demo script
+
+```bash
+cd contracts
+forge script script/Demo.s.sol:DemoConcertTicket \
+  --rpc-url "$SEPOLIA_RPC_URL" \
+  --broadcast
+```
+
+Script sẽ tự động: grant RTB → mua vé → verify → check-in và in kết quả ra console.
+
+### 8. Chạy frontend
+
+```bash
+# Từ thư mục root
 npm run dev
 ```
 
 Mở [http://localhost:3000](http://localhost:3000).
 
-### Hướng dẫn sử dụng
+### 9. Hướng dẫn sử dụng
 
 1. Đăng ký tài khoản và đăng nhập
 2. Kết nối MetaMask (chuyển sang mạng Sepolia)
@@ -122,6 +205,7 @@ Mở [http://localhost:3000](http://localhost:3000).
 | `hasTicket(addr)` | Địa chỉ có vé không |
 | `getMyTicket()` | Dữ liệu vé của người gọi |
 | `getMyTicketId()` | ID vé của người gọi |
+| `getTicketIdByOwner(addr)` | ID vé theo địa chỉ |
 | `verifyTicket(ticketId, secretKey)` | Xác minh vé và tính QR hash |
 | `getRTB(addr)` | Địa chỉ có quyền RTB không |
 

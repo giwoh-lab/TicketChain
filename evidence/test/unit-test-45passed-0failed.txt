@@ -1,0 +1,864 @@
+Ran 45 tests for test/concertTicket.t.sol:ConcertTicketTest
+[PASS] test_AdminCanGrantRTB() (gas: 64709)
+Traces:
+  [64709] ConcertTicketTest::test_AdminCanGrantRTB()
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [47981] ConcertTicket::grantRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   ├─ emit RTBUpdated(account: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], available: true)
+    │   └─ ← [Stop]
+    ├─ [2917] ConcertTicket::getRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] true
+    └─ ← [Stop]
+
+[PASS] test_AdminCanInvalidateTicket() (gas: 177676)
+Traces:
+  [177676] ConcertTicketTest::test_AdminCanInvalidateTicket()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [32714] ConcertTicket::invalidateTicket(1)
+    │   ├─ emit TicketInvalidated(ticketId: 1)
+    │   └─ ← [Stop]
+    ├─ [8058] ConcertTicket::getTicket(1) [staticcall]
+    │   └─ ← [Return] Ticket({ owner: 0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02, currStatus: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136 })
+    └─ ← [Stop]
+
+[PASS] test_AdminCanRevokeRTB() (gas: 102523)
+Traces:
+  [107323] ConcertTicketTest::test_AdminCanRevokeRTB()
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [47981] ConcertTicket::grantRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   ├─ emit RTBUpdated(account: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], available: true)
+    │   └─ ← [Stop]
+    ├─ [2917] ConcertTicket::getRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] true
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [26100] ConcertTicket::revokeRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   ├─ emit RTBUpdated(account: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], available: false)
+    │   └─ ← [Stop]
+    ├─ [2917] ConcertTicket::getRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] false
+    └─ ← [Stop]
+
+[PASS] test_BuyOfficialTicket() (gas: 170718)
+Traces:
+  [170718] ConcertTicketTest::test_BuyOfficialTicket()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [2919] ConcertTicket::getTicketIdByOwner(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] 1
+    ├─ [2888] ConcertTicket::hasTicket(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] true
+    ├─ [8058] ConcertTicket::getTicket(1) [staticcall]
+    │   └─ ← [Return] Ticket({ owner: 0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02, currStatus: 0, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136 })
+    ├─ [2493] ConcertTicket::nextTicketId() [staticcall]
+    │   └─ ← [Return] 2
+    └─ ← [Stop]
+
+[PASS] test_BuyRTBTicket() (gas: 203360)
+Traces:
+  [208160] ConcertTicketTest::test_BuyRTBTicket()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86400 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [47981] ConcertTicket::grantRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   ├─ emit RTBUpdated(account: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], available: true)
+    │   └─ ← [Stop]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105007] ConcertTicket::buyTicketRTB{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit RTBUpdated(account: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], available: false)
+    │   └─ ← [Stop]
+    ├─ [2888] ConcertTicket::hasTicket(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] true
+    ├─ [2919] ConcertTicket::getTicketIdByOwner(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] 1
+    ├─ [2917] ConcertTicket::getRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] false
+    └─ ← [Stop]
+
+[PASS] test_ContractReceivesPayment() (gas: 132006)
+Traces:
+  [132006] ConcertTicketTest::test_ContractReceivesPayment()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    └─ ← [Stop]
+
+[PASS] test_InitialState() (gas: 64511)
+Traces:
+  [64511] ConcertTicketTest::test_InitialState()
+    ├─ [2550] ConcertTicket::owner() [staticcall]
+    │   └─ ← [Return] admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF]
+    ├─ [2596] ConcertTicket::checkInOperator() [staticcall]
+    │   └─ ← [Return] admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF]
+    ├─ [2516] ConcertTicket::ticketPrice() [staticcall]
+    │   └─ ← [Return] 100000000000000000 [1e17]
+    ├─ [2493] ConcertTicket::nextTicketId() [staticcall]
+    │   └─ ← [Return] 1
+    ├─ [2588] ConcertTicket::getMyTicketId() [staticcall]
+    │   └─ ← [Return] 0
+    ├─ [2888] ConcertTicket::hasTicket(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] false
+    ├─ [2917] ConcertTicket::getRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] false
+    └─ ← [Stop]
+
+[PASS] test_InvalidTicketCannotBeVerified() (gas: 177361)
+Traces:
+  [177361] ConcertTicketTest::test_InvalidTicketCannotBeVerified()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [32714] ConcertTicket::invalidateTicket(1)
+    │   ├─ emit TicketInvalidated(ticketId: 1)
+    │   └─ ← [Stop]
+    ├─ [8037] ConcertTicket::verifyTicket(1, "secret-key-1") [staticcall]
+    │   └─ ← [Return] false, 0x0000000000000000000000000000000000000000000000000000000000000000
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_BuyAfterOfficialSale() (gas: 53809)
+Traces:
+  [53809] ConcertTicketTest::test_RevertWhen_BuyAfterOfficialSale()
+    ├─ [2514] ConcertTicket::closingTime() [staticcall]
+    │   └─ ← [Return] 691201 [6.912e5]
+    ├─ [0] VM::warp(691201 [6.912e5])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Official sale closed)
+    │   └─ ← [Return]
+    ├─ [26601] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Revert] Official sale closed
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_BuyBeforeOfficialSale() (gas: 51819)
+Traces:
+  [51819] ConcertTicketTest::test_RevertWhen_BuyBeforeOfficialSale()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86400 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Official sale closed)
+    │   └─ ← [Return]
+    ├─ [24491] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Revert] Official sale closed
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_InvalidTicketIsUsed() (gas: 232469)
+Traces:
+  [232469] ConcertTicketTest::test_RevertWhen_InvalidTicketIsUsed()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [30407] ConcertTicket::setCheckInOperator(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   ├─ emit CheckInOperatorChanged(newOperator: verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [32714] ConcertTicket::invalidateTicket(1)
+    │   ├─ emit TicketInvalidated(ticketId: 1)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Ticket not valid)
+    │   └─ ← [Return]
+    ├─ [28671] ConcertTicket::useTicket(1)
+    │   └─ ← [Revert] Ticket not valid
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_MaxTicketsBelowExistingTickets() (gas: 164869)
+Traces:
+  [164869] ConcertTicketTest::test_RevertWhen_MaxTicketsBelowExistingTickets()
+    ├─ [0] VM::warp(172801 [1.728e5])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [2493] ConcertTicket::nextTicketId() [staticcall]
+    │   └─ ← [Return] 2
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(new max below existing tickets)
+    │   └─ ← [Return]
+    ├─ [26398] ConcertTicket::setMaxTickets(0)
+    │   └─ ← [Revert] new max below existing tickets
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_NonOwnerChangesCheckInOperator() (gas: 35750)
+Traces:
+  [35750] ConcertTicketTest::test_RevertWhen_NonOwnerChangesCheckInOperator()
+    ├─ [0] VM::prank(attacker: [0x9dF0C6b0066D5317aA5b38B36850548DaCCa6B4e])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Only owner)
+    │   └─ ← [Return]
+    ├─ [24440] ConcertTicket::setCheckInOperator(attacker: [0x9dF0C6b0066D5317aA5b38B36850548DaCCa6B4e])
+    │   └─ ← [Revert] Only owner
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_NonOwnerGrantsRTB() (gas: 37750)
+Traces:
+  [37750] ConcertTicketTest::test_RevertWhen_NonOwnerGrantsRTB()
+    ├─ [0] VM::prank(attacker: [0x9dF0C6b0066D5317aA5b38B36850548DaCCa6B4e])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Only owner)
+    │   └─ ← [Return]
+    ├─ [24397] ConcertTicket::grantRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Revert] Only owner
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_NonOwnerInvalidatesTicket() (gas: 159788)
+Traces:
+  [159788] ConcertTicketTest::test_RevertWhen_NonOwnerInvalidatesTicket()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(attacker: [0x9dF0C6b0066D5317aA5b38B36850548DaCCa6B4e])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Only owner)
+    │   └─ ← [Return]
+    ├─ [24120] ConcertTicket::invalidateTicket(1)
+    │   └─ ← [Revert] Only owner
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_NonOwnerTransfersOwnership() (gas: 35791)
+Traces:
+  [35791] ConcertTicketTest::test_RevertWhen_NonOwnerTransfersOwnership()
+    ├─ [0] VM::prank(attacker: [0x9dF0C6b0066D5317aA5b38B36850548DaCCa6B4e])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Only owner)
+    │   └─ ← [Return]
+    ├─ [24439] ConcertTicket::transferOwnership(attacker: [0x9dF0C6b0066D5317aA5b38B36850548DaCCa6B4e])
+    │   └─ ← [Revert] Only owner
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_NonOwnerTransfersTicket() (gas: 166037)
+Traces:
+  [166037] ConcertTicketTest::test_RevertWhen_NonOwnerTransfersTicket()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(attacker: [0x9dF0C6b0066D5317aA5b38B36850548DaCCa6B4e])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Not ticket owner)
+    │   └─ ← [Return]
+    ├─ [27627] ConcertTicket::transferTicket(buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D], 1, 0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b)
+    │   └─ ← [Revert] Not ticket owner
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_NonOwnerWithdraws() (gas: 159095)
+Traces:
+  [159095] ConcertTicketTest::test_RevertWhen_NonOwnerWithdraws()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(attacker: [0x9dF0C6b0066D5317aA5b38B36850548DaCCa6B4e])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Only owner)
+    │   └─ ← [Return]
+    ├─ [23702] ConcertTicket::withdraw()
+    │   └─ ← [Revert] Only owner
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_RTBBuyerHasNoPermission() (gas: 51868)
+Traces:
+  [51868] ConcertTicketTest::test_RevertWhen_RTBBuyerHasNoPermission()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86400 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(RTB not granted)
+    │   └─ ← [Return]
+    ├─ [24520] ConcertTicket::buyTicketRTB{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Revert] RTB not granted
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_RTBIsUsedAfterOpening() (gas: 107507)
+Traces:
+  [107507] ConcertTicketTest::test_RevertWhen_RTBIsUsedAfterOpening()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [47981] ConcertTicket::grantRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   ├─ emit RTBUpdated(account: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], available: true)
+    │   └─ ← [Stop]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(RTB only before opening time)
+    │   └─ ← [Return]
+    ├─ [28851] ConcertTicket::buyTicketRTB{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Revert] RTB only before opening time
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_RTBIsUsedTwice() (gas: 224847)
+Traces:
+  [229647] ConcertTicketTest::test_RevertWhen_RTBIsUsedTwice()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86400 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [47981] ConcertTicket::grantRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   ├─ emit RTBUpdated(account: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], available: true)
+    │   └─ ← [Stop]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 2000000000000000000 [2e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105007] ConcertTicket::buyTicketRTB{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit RTBUpdated(account: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], available: false)
+    │   └─ ← [Stop]
+    ├─ [2917] ConcertTicket::getRTB(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] false
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(RTB not granted)
+    │   └─ ← [Return]
+    ├─ [24508] ConcertTicket::buyTicketRTB{value: 100000000000000000}(0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b)
+    │   └─ ← [Revert] RTB not granted
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_SecondTicketIsPurchased() (gas: 168983)
+Traces:
+  [168983] ConcertTicketTest::test_RevertWhen_SecondTicketIsPurchased()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::startPrank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::expectRevert(Already owns ticket)
+    │   └─ ← [Return]
+    ├─ [28798] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b)
+    │   └─ ← [Revert] Already owns ticket
+    ├─ [0] VM::stopPrank()
+    │   └─ ← [Return]
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_SendingETHDirectly() (gas: 39574)
+Traces:
+  [39574] ConcertTicketTest::test_RevertWhen_SendingETHDirectly()
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [21349] ConcertTicket::receive{value: 1000000000000000000}()
+    │   └─ ← [Revert] Send ETH via purchase functions
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_SoldOut() (gas: 214564)
+Traces:
+  [214564] ConcertTicketTest::test_RevertWhen_SoldOut()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [32330] ConcertTicket::setMaxTickets(1)
+    │   ├─ emit MaxTicketsChanged(newMax: 1)
+    │   └─ ← [Stop]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Sold out)
+    │   └─ ← [Return]
+    ├─ [35373] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b)
+    │   └─ ← [Revert] Sold out
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_TicketIdDoesNotExist() (gas: 13421)
+Traces:
+  [13421] ConcertTicketTest::test_RevertWhen_TicketIdDoesNotExist()
+    ├─ [0] VM::expectRevert(Ticket does not exist)
+    │   └─ ← [Return]
+    ├─ [3071] ConcertTicket::getTicket(999) [staticcall]
+    │   └─ ← [Revert] Ticket does not exist
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_TicketIdIsZero() (gas: 11307)
+Traces:
+  [11307] ConcertTicketTest::test_RevertWhen_TicketIdIsZero()
+    ├─ [0] VM::expectRevert(Ticket does not exist)
+    │   └─ ← [Return]
+    ├─ [960] ConcertTicket::getTicket(0) [staticcall]
+    │   └─ ← [Revert] Ticket does not exist
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_TicketIsUsedTwice() (gas: 232500)
+Traces:
+  [232500] ConcertTicketTest::test_RevertWhen_TicketIsUsedTwice()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [30407] ConcertTicket::setCheckInOperator(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   ├─ emit CheckInOperatorChanged(newOperator: verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Return]
+    ├─ [32766] ConcertTicket::useTicket(1)
+    │   ├─ emit TicketUsed(ticketId: 1)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Ticket not valid)
+    │   └─ ← [Return]
+    ├─ [28671] ConcertTicket::useTicket(1)
+    │   └─ ← [Revert] Ticket not valid
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_TransferInvalidTicket() (gas: 200487)
+Traces:
+  [200487] ConcertTicketTest::test_RevertWhen_TransferInvalidTicket()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [32714] ConcertTicket::invalidateTicket(1)
+    │   ├─ emit TicketInvalidated(ticketId: 1)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Ticket not valid)
+    │   └─ ← [Return]
+    ├─ [27971] ConcertTicket::transferTicket(buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D], 1, 0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b)
+    │   └─ ← [Revert] Ticket not valid
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_TransferToExistingTicketOwner() (gas: 280861)
+Traces:
+  [280861] ConcertTicketTest::test_RevertWhen_TransferToExistingTicketOwner()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::deal(buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D])
+    │   └─ ← [Return]
+    ├─ [105032] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b)
+    │   ├─ emit TicketCreated(buyer: buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D], ticketId: 2, commitment: 0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Recipient already has ticket)
+    │   └─ ← [Return]
+    ├─ [30215] ConcertTicket::transferTicket(buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D], 1, 0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b)
+    │   └─ ← [Revert] Recipient already has ticket
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_UnauthorizedUserUsesTicket() (gas: 159834)
+Traces:
+  [159834] ConcertTicketTest::test_RevertWhen_UnauthorizedUserUsesTicket()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(attacker: [0x9dF0C6b0066D5317aA5b38B36850548DaCCa6B4e])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Only check-in operator)
+    │   └─ ← [Return]
+    ├─ [24168] ConcertTicket::useTicket(1)
+    │   └─ ← [Revert] Only check-in operator
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_UsedTicketIsInvalidated() (gas: 232487)
+Traces:
+  [232487] ConcertTicketTest::test_RevertWhen_UsedTicketIsInvalidated()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [30407] ConcertTicket::setCheckInOperator(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   ├─ emit CheckInOperatorChanged(newOperator: verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Return]
+    ├─ [32766] ConcertTicket::useTicket(1)
+    │   ├─ emit TicketUsed(ticketId: 1)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Used tickets cannot be invalidated)
+    │   └─ ← [Return]
+    ├─ [28639] ConcertTicket::invalidateTicket(1)
+    │   └─ ← [Revert] Used tickets cannot be invalidated
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_WithdrawWithNoBalance() (gas: 34756)
+Traces:
+  [34756] ConcertTicketTest::test_RevertWhen_WithdrawWithNoBalance()
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Nothing to withdraw)
+    │   └─ ← [Return]
+    ├─ [23736] ConcertTicket::withdraw()
+    │   └─ ← [Revert] Nothing to withdraw
+    └─ ← [Stop]
+
+[PASS] test_RevertWhen_WrongPayment() (gas: 58345)
+Traces:
+  [58345] ConcertTicketTest::test_RevertWhen_WrongPayment()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [0] VM::expectRevert(Incorrect ETH amount)
+    │   └─ ← [Return]
+    ├─ [31159] ConcertTicket::buyTicketOfficial{value: 50000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Revert] Incorrect ETH amount
+    └─ ← [Stop]
+
+[PASS] test_SaleClosesAtClosingTime() (gas: 20761)
+Traces:
+  [20761] ConcertTicketTest::test_SaleClosesAtClosingTime()
+    ├─ [2514] ConcertTicket::closingTime() [staticcall]
+    │   └─ ← [Return] 691201 [6.912e5]
+    ├─ [0] VM::warp(691201 [6.912e5])
+    │   └─ ← [Return]
+    ├─ [4644] ConcertTicket::isSaleOpen() [staticcall]
+    │   └─ ← [Return] false
+    └─ ← [Stop]
+
+[PASS] test_SaleIsInitiallyClosed() (gas: 7999)
+Traces:
+  [7999] ConcertTicketTest::test_SaleIsInitiallyClosed()
+    ├─ [2534] ConcertTicket::isSaleOpen() [staticcall]
+    │   └─ ← [Return] false
+    └─ ← [Stop]
+
+[PASS] test_SaleOpensAtOpeningTime() (gas: 20782)
+Traces:
+  [20782] ConcertTicketTest::test_SaleOpensAtOpeningTime()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [4644] ConcertTicket::isSaleOpen() [staticcall]
+    │   └─ ← [Return] true
+    └─ ← [Stop]
+
+[PASS] test_SetCheckInOperator() (gas: 48726)
+Traces:
+  [48726] ConcertTicketTest::test_SetCheckInOperator()
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [30407] ConcertTicket::setCheckInOperator(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   ├─ emit CheckInOperatorChanged(newOperator: verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Stop]
+    ├─ [2596] ConcertTicket::checkInOperator() [staticcall]
+    │   └─ ← [Return] verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147]
+    └─ ← [Stop]
+
+[PASS] test_SetMaxTickets() (gas: 46293)
+Traces:
+  [46293] ConcertTicketTest::test_SetMaxTickets()
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [32330] ConcertTicket::setMaxTickets(10)
+    │   ├─ emit MaxTicketsChanged(newMax: 10)
+    │   └─ ← [Stop]
+    ├─ [2492] ConcertTicket::maxTickets() [staticcall]
+    │   └─ ← [Return] 10
+    └─ ← [Stop]
+
+[PASS] test_SetTicketPrice() (gas: 43951)
+Traces:
+  [43951] ConcertTicketTest::test_SetTicketPrice()
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [30079] ConcertTicket::setTicketPrice(200000000000000000 [2e17])
+    │   ├─ emit TicketPriceChanged(newPrice: 200000000000000000 [2e17])
+    │   └─ ← [Stop]
+    ├─ [2516] ConcertTicket::ticketPrice() [staticcall]
+    │   └─ ← [Return] 200000000000000000 [2e17]
+    └─ ← [Stop]
+
+[PASS] test_TransferOwnership() (gas: 47139)
+Traces:
+  [47139] ConcertTicketTest::test_TransferOwnership()
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [28934] ConcertTicket::transferOwnership(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   ├─ emit OwnerTransferred(previousOwner: admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF], newOwner: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Stop]
+    ├─ [2550] ConcertTicket::owner() [staticcall]
+    │   └─ ← [Return] buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]
+    └─ ← [Stop]
+
+[PASS] test_TransferTicket() (gas: 222735)
+Traces:
+  [227535] ConcertTicketTest::test_TransferTicket()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [60510] ConcertTicket::transferTicket(buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D], 1, 0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b)
+    │   ├─ emit TicketTransferred(from: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], to: buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D], ticketId: 1)
+    │   └─ ← [Stop]
+    ├─ [2919] ConcertTicket::getTicketIdByOwner(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02]) [staticcall]
+    │   └─ ← [Return] 0
+    ├─ [2919] ConcertTicket::getTicketIdByOwner(buyer2: [0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D]) [staticcall]
+    │   └─ ← [Return] 1
+    ├─ [8058] ConcertTicket::getTicket(1) [staticcall]
+    │   └─ ← [Return] Ticket({ owner: 0x3a7e663c871351BbE7B6dD006cB4A46d75cCe61D, currStatus: 0, commitment: 0xfaebd7459466ee545beb36772a38006aa36d60ec759aeffdae2744a27041d03b })
+    └─ ← [Stop]
+
+[PASS] test_UseTicket() (gas: 211624)
+Traces:
+  [211624] ConcertTicketTest::test_UseTicket()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [30407] ConcertTicket::setCheckInOperator(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   ├─ emit CheckInOperatorChanged(newOperator: verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(verifier: [0x85D901fA99F2c211f80818b00078C8D8F9847147])
+    │   └─ ← [Return]
+    ├─ [32766] ConcertTicket::useTicket(1)
+    │   ├─ emit TicketUsed(ticketId: 1)
+    │   └─ ← [Stop]
+    ├─ [8058] ConcertTicket::getTicket(1) [staticcall]
+    │   └─ ← [Return] Ticket({ owner: 0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02, currStatus: 2, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136 })
+    └─ ← [Stop]
+
+[PASS] test_VerifyTicketWithCorrectSecret() (gas: 142087)
+Traces:
+  [142087] ConcertTicketTest::test_VerifyTicketWithCorrectSecret()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [8530] ConcertTicket::verifyTicket(1, "secret-key-1") [staticcall]
+    │   └─ ← [Return] true, 0x2bf26bc246005672a1203b9277a1ad8a9eaee53ce9df3bd8116f9969d9aa351e
+    └─ ← [Stop]
+
+[PASS] test_VerifyTicketWithWrongSecret() (gas: 138861)
+Traces:
+  [138861] ConcertTicketTest::test_VerifyTicketWithWrongSecret()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [5771] ConcertTicket::verifyTicket(1, "wrong-secret") [staticcall]
+    │   └─ ← [Return] false, 0x0000000000000000000000000000000000000000000000000000000000000000
+    └─ ← [Stop]
+
+[PASS] test_Withdraw() (gas: 169104)
+Traces:
+  [169104] ConcertTicketTest::test_Withdraw()
+    ├─ [2470] ConcertTicket::openingTime() [staticcall]
+    │   └─ ← [Return] 86401 [8.64e4]
+    ├─ [0] VM::warp(86401 [8.64e4])
+    │   └─ ← [Return]
+    ├─ [0] VM::deal(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], 1000000000000000000 [1e18])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02])
+    │   └─ ← [Return]
+    ├─ [105044] ConcertTicket::buyTicketOfficial{value: 100000000000000000}(0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   ├─ emit TicketCreated(buyer: buyer: [0x0fF93eDfa7FB7Ad5E962E4C0EdB9207C03a0fe02], ticketId: 1, commitment: 0xa4c21947820bd06e391f405f3dffb34b14044c0e5a5826dfa1c40ad5b83a6136)
+    │   └─ ← [Stop]
+    ├─ [0] VM::prank(admin: [0xaA10a84CE7d9AE517a52c6d5cA153b369Af99ecF])
+    │   └─ ← [Return]
+    ├─ [30705] ConcertTicket::withdraw()
+    │   ├─ [0] admin::receive{value: 100000000000000000}()
+    │   │   └─ ← [Stop]
+    │   └─ ← [Stop]
+    └─ ← [Stop]
+
+Suite result: ok. 45 passed; 0 failed; 0 skipped; finished in 3.10ms (16.30ms CPU time)
+
+Ran 1 test suite in 14.14ms (3.10ms CPU time): 45 tests passed, 0 failed, 0 skipped (45 total tests)

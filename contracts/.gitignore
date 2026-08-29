@@ -1,0 +1,16 @@
+# Compiler files
+cache/
+out/
+
+# Commonly ignored directories
+.logs/
+.ignore/
+
+# Broadcast — chỉ ignore sensitive cache, giữ broadcast logs làm evidence
+/broadcast/**/dry-run/
+/broadcast/*/31337/
+
+# Dotenv file
+.env
+.env.*
+!.env.example
