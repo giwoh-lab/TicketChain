@@ -7,3 +7,4 @@ coverage/
 .env.local
 *.log
 .env
+.DS_Store
